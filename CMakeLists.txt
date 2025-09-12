@@ -13,6 +13,8 @@ add_subdirectory(3rd/vk-bootstrap)
 add_subdirectory(3rd/SDL)
 add_subdirectory(3rd/Catch2)
 add_subdirectory(3rd/VulkanMemoryAllocator)
+add_subdirectory(3rd/spdlog)
+add_subdirectory(3rd/SPIRV-Reflect)
 
 # Core projects
 add_subdirectory(renderer)

@@ -10,3 +10,9 @@
 [submodule "3rd/vk-bootstrap"]
 	path = 3rd/vk-bootstrap
 	url = https://github.com/charles-lunarg/vk-bootstrap
+[submodule "3rd/spdlog"]
+	path = 3rd/spdlog
+	url = https://github.com/gabime/spdlog
+[submodule "3rd/SPIRV-Reflect"]
+	path = 3rd/SPIRV-Reflect
+	url = https://github.com/KhronosGroup/SPIRV-Reflect

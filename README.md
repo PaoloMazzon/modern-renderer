@@ -9,6 +9,7 @@ Use the `.clang-format` for formatting your code. Some things to keep in mind:
  - Write tests for your code where applicable (obviously not all render work can have automated tests)
  - No esoteric names
  - Keep C++ crazy OOP nonsense to a minimum
+ - Use snake_case for variables and functions, prefix methods with `m_` and use PascalCase for class/struct names
 
 ## License
 Copyright until further notice.
