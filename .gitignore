@@ -1,0 +1,102 @@
+# Compiled Object Files and Libraries
+*.o
+*.obj
+*.ko
+*.lo
+*.la
+*.so
+*.a
+*.dll
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+*.bin
+*.elf
+a.out
+
+# Build Directories
+build/
+bin/
+obj/
+Debug/
+Release/
+x64/
+x86/
+arm64/
+*.dir/
+
+# CMake Specific Files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CTestTestfile.cmake
+_CPack_Packages/
+
+# Visual Studio / MSVC Specific Files
+*.VC.db
+*.VC.opendb
+*.vcxproj.user
+*.suo
+*.user
+*.ncb
+*.aps
+*.pdb
+*.ipch
+*.log
+*.ilk
+*.manifest
+*.tlog
+*.lastbuildstate
+[Dd]ebug/
+[Rr]elease/
+obj/
+ipch/
+*.opensdf
+*.sdf
+*.vshost.*
+*.vspscc
+*.vssscc
+*.build.log
+*.code-workspace
+.vs/
+vcpkg/
+
+# Xcode Specific Files
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+build/
+
+# Eclipse Specific Files
+.project
+.cproject
+.settings/
+
+# Other IDE/Editor Specific Files
+.vscode/
+.idea/
+*.swp
+*~
+
+# Miscellaneous Temporary Files
+*.tmp
+*.bak
+*.sbr
+*.bsc
+*.res
+*.pch
+*.gch
+*.d
+*.gcno
+*.gcda
+*.gcov
+*.prof
+*.pyc
+*.pyo
+*.swp
+*~
+
+cmake-build-debug/

@@ -1,0 +1,32 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Braces on same line
+BreakBeforeBraces: Attach
+
+# Control statement spacing
+SpaceBeforeParens: ControlStatements
+
+# Keep function signatures readable
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# Namespace and access specifier handling
+IndentNamespace: None
+AccessModifierOffset: -4
+
+# Align settings for readability
+AlignOperands:   true
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignConsecutiveMacros: true
+
+# Misc
+ColumnLimit: 100
+SortIncludes: true
+IncludeBlocks: Regroup

@@ -1,0 +1,12 @@
+[submodule "3rd/SDL"]
+	path = 3rd/SDL
+	url = https://github.com/libsdl-org/SDL
+[submodule "3rd/Catch2"]
+	path = 3rd/Catch2
+	url = https://github.com/catchorg/Catch2
+[submodule "3rd/VulkanMemoryAllocator"]
+	path = 3rd/VulkanMemoryAllocator
+	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+[submodule "3rd/vk-bootstrap"]
+	path = 3rd/vk-bootstrap
+	url = https://github.com/charles-lunarg/vk-bootstrap
