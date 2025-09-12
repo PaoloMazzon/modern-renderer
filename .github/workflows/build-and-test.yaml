@@ -31,4 +31,8 @@ jobs:
         run: cmake --build build --config Release
 
       - name: Run tests
-        run: ctest --test-dir build --output-on-failure
+        run: |
+          ls -R build/
+          cp build/3rd/SDL/SDL3.so
+          cd test
+          ctest --test-dir build/tests --output-on-failure
