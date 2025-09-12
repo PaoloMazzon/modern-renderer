@@ -32,5 +32,5 @@ jobs:
 
       - name: Run tests
         run: |
-          cp build/3rd/SDL/SDL3.so ./
+          export LD_LIBRARY_PATH=${{ github.workspace }}/build/SDL3:$LD_LIBRARY_PATH
           ctest --test-dir build/tests --output-on-failure
