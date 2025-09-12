@@ -13,6 +13,12 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Download submodules
+        run: | 
+          git submodule update --init --recursive
+          cd 3rd/vk-bootstrap
+          git checkout fd71b1dd8227bb122c110c0d30836ab7ec1c089a
+
       - name: Install dependencies
         run: |
           sudo apt-get update
