@@ -1,5 +1,6 @@
 /// \brief Singleton renderer that contains all necessary state
 #pragma once
+#include <vulkan/vulkan.h>
 #include "render/Structs.h"
 
 namespace Internal_Render {
@@ -7,6 +8,13 @@ namespace Internal_Render {
     class Renderer {
     private:
         Renderer() {}
+
+        // Internal vulkan state
+        VkInstance vk_instance;
+        VkSurfaceKHR vk_surface;
+        VkPhysicalDevice vk_physical_device;
+        VkDevice vk_logical_device;
+        VkQueue vk_queue; // this is a graphics/compute queue
 
     public:
         // Singleton pattern - the class is destroyed at program end

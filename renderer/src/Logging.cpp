@@ -5,7 +5,7 @@
 
 static thread_local std::string g_error_string = "";
 
-void Internal_Render::set_error_message(const char *msg) {
+void Internal_Render::set_error_message(std::string&& msg) {
     g_error_string = "";
     g_error_string.append(msg);
 }

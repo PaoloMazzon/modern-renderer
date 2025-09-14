@@ -16,6 +16,9 @@ add_subdirectory(3rd/VulkanMemoryAllocator)
 add_subdirectory(3rd/spdlog)
 add_subdirectory(3rd/SPIRV-Reflect)
 
+# We only care about warnings for our code
+add_compile_options(-Wall -Wextra -pedantic)
+
 # Core projects
 add_subdirectory(renderer)
 add_subdirectory(test-app)

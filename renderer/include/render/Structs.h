@@ -12,8 +12,13 @@ extern "C" {
 /// error. Fatal errors mean the renderer can no longer continue operating, positive result
 /// codes represent less severe and recoverable problems.
 typedef enum {
-    MVR_RESULT_FAILURE = -1, ///< Unknown critical failure
-    MVR_RESULT_SUCCESS = 0,  ///< Everything worked fine
+    MVR_RESULT_FAILURE = -1,               ///< Unknown critical failure
+    MVR_RESULT_CRITICAL_SDL_ERROR = -2,    ///< Error from SDL that cannot be recovered
+    MVR_RESULT_NO_DEVICE = -3,             ///< There is no available and compatible GPU
+    MVR_RESULT_CRITICAL_VULKAN_ERROR = -3, ///< General error from Vulkan that cannot be recovered
+    MVR_RESULT_SDL_ERROR = 1,              ///< General SDL error
+    MVR_RESULT_VULKAN_ERROR = 2,           ///< General Vulkan error
+    MVR_RESULT_SUCCESS = 0,                ///< Everything worked fine
 } MVR_Result;
 
 /// \brief Tells the initialize function all necessary options to start the renderer
