@@ -5,7 +5,7 @@
 
 static thread_local std::string g_error_string = "";
 
-void MVRender::set_error_message(std::string&& msg) {
+void MVRender::set_error_message(const std::string& msg) {
     g_error_string = "";
     g_error_string.append(msg);
 }
