@@ -9,3 +9,6 @@ MVR_API MVR_Result mvr_Initialize(MVR_InitializeParams *params);
 
 /// \brief Frees all renderer resources
 MVR_API void mvr_Quit();
+
+/// \brief Returns an error message or an empty string if there is none.
+MVR_API const char *mvr_GetError();

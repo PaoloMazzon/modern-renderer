@@ -8,8 +8,8 @@ add_executable(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
         PRIVATE
-        modern_renderer
         Catch2::Catch2WithMain
+        modern_renderer
 )
 
 include(CTest)

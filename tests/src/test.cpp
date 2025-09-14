@@ -1,5 +1,9 @@
+#define CATCH_CONFIG_MAIN
 #include <catch2/catch_test_macros.hpp>
+#include <render/Core.h>
+#include <render/Logging.hpp>
 
-TEST_CASE("nonsense") {
-    REQUIRE(1 == 1);
+TEST_CASE("User-facing error messages") {
+    Internal_Render::set_error_message("123abc");
+    REQUIRE(strcmp(mvr_GetError(), "123abc") == 0);
 }
