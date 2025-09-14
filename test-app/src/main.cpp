@@ -1,6 +1,7 @@
 #include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+#include <render/Core.h>
 
 const char *WINDOW_TITLE = "Test App";
 const int WINDOW_WIDTH   = 800;
@@ -24,6 +25,18 @@ int main() {
 
     spdlog::info("Created window successfully.");
 
+    // Initialize renderer
+    MVR_InitializeParams params = {
+            .window = window,
+            .debug = true,
+    };
+    MVR_Result result = mvr_Initialize(&params);
+
+    if (result != MVR_RESULT_SUCCESS) {
+        spdlog::error("Failed to create renderer.");
+        return 1;
+    }
+
     // Main event loop
     SDL_Event e;
     bool keep_window_open = true;
@@ -36,6 +49,7 @@ int main() {
         }
     }
 
+    mvr_Quit();
     spdlog::info("Quit program.");
     return 0;
 }
