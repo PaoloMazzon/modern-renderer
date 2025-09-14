@@ -4,6 +4,6 @@
 #include <render/Logging.hpp>
 
 TEST_CASE("User-facing error messages") {
-    Internal_Render::set_error_message("123abc");
+    MVRender::set_error_message("123abc");
     REQUIRE(strcmp(mvr_GetError(), "123abc") == 0);
 }

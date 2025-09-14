@@ -9,8 +9,13 @@ const int WINDOW_HEIGHT  = 600;
 using defer = std::shared_ptr<void>;
 
 int main() {
+    if (!SDL_Init(SDL_INIT_EVENTS)) {
+        spdlog::info("Failed to initialize SDL, SDL error {}", SDL_GetError());
+        return -1;
+    }
+
     // Create window for test program
-    spdlog::info("Creating window.");
+    spdlog::info("Creating window.", nullptr);
     SDL_Window *window = SDL_CreateWindow(
             WINDOW_TITLE,
             WINDOW_WIDTH,
@@ -23,7 +28,7 @@ int main() {
         return 1;
     }
 
-    spdlog::info("Created window successfully.");
+    spdlog::info("Created window successfully.", nullptr);
 
     // Initialize renderer
     MVR_InitializeParams params = {
@@ -44,12 +49,12 @@ int main() {
         while (SDL_PollEvent(&e)) {
             if (e.type == SDL_EVENT_QUIT) {
                 keep_window_open = false;
-                spdlog::info("Received quit signal.");
+                spdlog::info("Received quit signal.", nullptr);
             }
         }
     }
 
     mvr_Quit();
-    spdlog::info("Quit program.");
+    spdlog::info("Quit program.", nullptr);
     return 0;
 }

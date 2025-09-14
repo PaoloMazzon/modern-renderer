@@ -17,7 +17,7 @@ Use the `.clang-format` for formatting your code. Some things to keep in mind:
    the parameters themselves. Name this struct `MVR_FunctionNameParams`
  - Document user-facing functions properly with Doxygen notation
  - User-facing structs should be named with a `_s` suffix and typedef'd with no suffix
- - Internal C++ things should all be in the `Internal_Render` namespace
+ - Internal C++ things should all be in the `MVRender` namespace
 
 Take a peek at the project tab or issues to see what work needs to be done.
 

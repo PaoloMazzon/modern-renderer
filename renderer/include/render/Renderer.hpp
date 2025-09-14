@@ -3,7 +3,7 @@
 #include <vulkan/vulkan.h>
 #include "render/Structs.h"
 
-namespace Internal_Render {
+namespace MVRender {
     // Internal renderer state
     class Renderer {
     private:
