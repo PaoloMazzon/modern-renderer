@@ -14,5 +14,5 @@ MVR_API MVR_Result mvr_Initialize(MVR_InitializeParams *params) {
 }
 
 MVR_API void mvr_Quit() {
-
+    MVRender::Renderer::instance().m_quit_vulkan();
 }

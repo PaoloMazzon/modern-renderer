@@ -23,7 +23,7 @@ void MVRender::Renderer::m_initialize_vulkan(MVR_InitializeParams& params) {
     if (!inst_ret) {
         throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, std::format("Failed to create Vulkan instance, Vulkan error {}", static_cast<uint32_t>(inst_ret.full_error().vk_result)));
     }
-    auto instance_info = inst_ret.value();
+    this->vkb_instance = inst_ret.value();
     this->vk_instance = inst_ret.value().instance;
 
     spdlog::info("Created Vulkan instance.");
@@ -36,7 +36,7 @@ void MVRender::Renderer::m_initialize_vulkan(MVR_InitializeParams& params) {
     spdlog::info("Created Vulkan surface.");
 
     // Physical device
-    vkb::PhysicalDeviceSelector selector { instance_info };
+    vkb::PhysicalDeviceSelector selector { this->vkb_instance };
     auto phys_ret = selector.set_surface (vk_surface)
             .set_minimum_version (1, 3)
             .prefer_gpu_device_type(vkb::PreferredDeviceType::discrete)
@@ -49,16 +49,43 @@ void MVRender::Renderer::m_initialize_vulkan(MVR_InitializeParams& params) {
     spdlog::info("Found suitable physical device {}.", phys_ret.value().name);
 
     vkb::DeviceBuilder device_builder{ phys_ret.value () };
-    auto dev_ret = device_builder.build ();
+
+    // Enable required features
+    VkPhysicalDeviceVulkan13Features vulkan13_features = {};
+    vulkan13_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
+    vulkan13_features.dynamicRendering = VK_TRUE;
+    vulkan13_features.synchronization2 = VK_TRUE;
+
+    // Enable bindless
+    VkPhysicalDeviceDescriptorIndexingFeatures descriptor_indexing_features = {};
+    descriptor_indexing_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+    descriptor_indexing_features.runtimeDescriptorArray = VK_TRUE;
+    descriptor_indexing_features.descriptorBindingVariableDescriptorCount = VK_TRUE;
+    descriptor_indexing_features.descriptorBindingPartiallyBound = VK_TRUE;
+    descriptor_indexing_features.descriptorBindingUpdateUnusedWhilePending = VK_TRUE;
+    descriptor_indexing_features.descriptorBindingSampledImageUpdateAfterBind = VK_TRUE;
+    descriptor_indexing_features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+    descriptor_indexing_features.descriptorBindingStorageBufferUpdateAfterBind = VK_TRUE;
+    descriptor_indexing_features.shaderStorageBufferArrayNonUniformIndexing = VK_TRUE;
+
+    // Enable timeline semaphores
+    VkPhysicalDeviceTimelineSemaphoreFeatures timeline_semaphore_features = {};
+    timeline_semaphore_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
+    timeline_semaphore_features.timelineSemaphore = VK_TRUE;
+
+    auto dev_ret = device_builder.add_pNext(&vulkan13_features)
+            .add_pNext(&descriptor_indexing_features)
+            .add_pNext(&timeline_semaphore_features)
+            .build();
     if (!dev_ret) {
         throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, std::format("Failed to create the logical device, Vulkan error {}", static_cast<uint32_t>(dev_ret.full_error().vk_result)));
     }
-    vkb::Device vkb_device = dev_ret.value ();
-    this->vk_logical_device = vkb_device.device;
+    this->vkb_logical_device = dev_ret.value();
+    this->vk_logical_device = this->vkb_logical_device.device;
 
     spdlog::info("Created logical device.");
 
-    auto graphics_queue_ret = vkb_device.get_queue (vkb::QueueType::graphics);
+    auto graphics_queue_ret = this->vkb_logical_device.get_queue (vkb::QueueType::graphics);
     if (!graphics_queue_ret)  {
         throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, std::format("Failed to create the device queue, Vulkan error {}", static_cast<uint32_t>(graphics_queue_ret.full_error().vk_result)));
     }
@@ -68,8 +95,10 @@ void MVRender::Renderer::m_initialize_vulkan(MVR_InitializeParams& params) {
 }
 
 void MVRender::Renderer::m_quit_vulkan() {
-    vkQueueWaitIdle(this->vk_queue);
-    vkDestroyDevice(this->vk_logical_device, nullptr);
+    spdlog::info("Waiting for GPU to idle.");
+    vkDeviceWaitIdle(this->vk_logical_device);
+    vkb::destroy_device(this->vkb_logical_device);
     vkDestroySurfaceKHR(this->vk_instance, this->vk_surface, nullptr);
-    vkDestroyInstance(this->vk_instance, nullptr);
+    vkb::destroy_instance(this->vkb_instance);
+    spdlog::info("Freed Vulkan resources.");
 }

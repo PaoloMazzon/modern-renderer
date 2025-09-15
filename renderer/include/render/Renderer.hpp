@@ -1,5 +1,6 @@
 /// \brief Singleton renderer that contains all necessary state
 #pragma once
+#include <VkBootstrap.h>
 #include <vulkan/vulkan.h>
 #include "render/Structs.h"
 
@@ -15,6 +16,10 @@ namespace MVRender {
         VkPhysicalDevice vk_physical_device;
         VkDevice vk_logical_device;
         VkQueue vk_queue; // this is a graphics/compute queue
+
+        // vk-bootstrap state
+        vkb::Instance vkb_instance;
+        vkb::Device vkb_logical_device;
 
     public:
         // Singleton pattern - the class is destroyed at program end

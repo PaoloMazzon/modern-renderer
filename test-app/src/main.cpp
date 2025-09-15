@@ -6,7 +6,6 @@
 const char *WINDOW_TITLE = "Test App";
 const int WINDOW_WIDTH   = 800;
 const int WINDOW_HEIGHT  = 600;
-using defer = std::shared_ptr<void>;
 
 int main() {
     if (!SDL_Init(SDL_INIT_EVENTS)) {
@@ -21,7 +20,6 @@ int main() {
             WINDOW_WIDTH,
             WINDOW_HEIGHT,
             SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE);
-    defer _(nullptr, [&window](...) { SDL_DestroyWindow(window); });
 
     if (!window) {
         spdlog::error("Failed to create window, SDL error {}", SDL_GetError());
@@ -55,6 +53,8 @@ int main() {
     }
 
     mvr_Quit();
+    SDL_DestroyWindow(window);
+    SDL_Quit();
     spdlog::info("Quit program.", nullptr);
     return 0;
 }
