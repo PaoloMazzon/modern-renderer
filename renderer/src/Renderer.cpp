@@ -6,7 +6,7 @@
 #include "render/Renderer.hpp"
 #include "render/Logging.hpp"
 
-void MVRender::Renderer::m_initialize_vulkan(MVR_InitializeParams& params) {
+void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     // Get SDL requested layers
     uint32_t count;
     const char * const *extensions = SDL_Vulkan_GetInstanceExtensions(&count);
@@ -23,28 +23,28 @@ void MVRender::Renderer::m_initialize_vulkan(MVR_InitializeParams& params) {
     if (!inst_ret) {
         throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, std::format("Failed to create Vulkan instance, Vulkan error {}", static_cast<uint32_t>(inst_ret.full_error().vk_result)));
     }
-    this->vkb_instance = inst_ret.value();
-    this->vk_instance = inst_ret.value().instance;
+    m_vkb_instance = inst_ret.value();
+    m_vk_instance = inst_ret.value().instance;
 
     spdlog::info("Created Vulkan instance.");
 
     // Create the surface
-    if (!SDL_Vulkan_CreateSurface(params.window, this->vk_instance, VK_NULL_HANDLE, &this->vk_surface)) {
+    if (!SDL_Vulkan_CreateSurface(params.window, m_vk_instance, VK_NULL_HANDLE, &m_vk_surface)) {
         throw MVRender::Exception(MVR_RESULT_CRITICAL_SDL_ERROR, std::format("Failed to create Vulkan surface, SDL error {}", SDL_GetError()));
     }
 
     spdlog::info("Created Vulkan surface.");
 
     // Physical device
-    vkb::PhysicalDeviceSelector selector { this->vkb_instance };
-    auto phys_ret = selector.set_surface (vk_surface)
+    vkb::PhysicalDeviceSelector selector { m_vkb_instance };
+    auto phys_ret = selector.set_surface (m_vk_surface)
             .set_minimum_version (1, 3)
             .prefer_gpu_device_type(vkb::PreferredDeviceType::discrete)
             .select();
     if (!phys_ret) {
         throw MVRender::Exception(MVR_RESULT_NO_DEVICE, std::format("Failed to find a suitable physical device, Vulkan error {}", static_cast<uint32_t>(phys_ret.full_error().vk_result)));
     }
-    this->vk_physical_device = phys_ret.value().physical_device;
+    m_vk_physical_device = phys_ret.value().physical_device;
 
     spdlog::info("Found suitable physical device {}.", phys_ret.value().name);
 
@@ -80,25 +80,25 @@ void MVRender::Renderer::m_initialize_vulkan(MVR_InitializeParams& params) {
     if (!dev_ret) {
         throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, std::format("Failed to create the logical device, Vulkan error {}", static_cast<uint32_t>(dev_ret.full_error().vk_result)));
     }
-    this->vkb_logical_device = dev_ret.value();
-    this->vk_logical_device = this->vkb_logical_device.device;
+    m_vkb_logical_device = dev_ret.value();
+    m_vk_logical_device = m_vkb_logical_device.device;
 
     spdlog::info("Created logical device.");
 
-    auto graphics_queue_ret = this->vkb_logical_device.get_queue (vkb::QueueType::graphics);
+    auto graphics_queue_ret = m_vkb_logical_device.get_queue (vkb::QueueType::graphics);
     if (!graphics_queue_ret)  {
         throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, std::format("Failed to create the device queue, Vulkan error {}", static_cast<uint32_t>(graphics_queue_ret.full_error().vk_result)));
     }
-    this->vk_queue = graphics_queue_ret.value();
+    m_vk_queue = graphics_queue_ret.value();
 
     spdlog::info("Created graphics/compute queue.");
 }
 
-void MVRender::Renderer::m_quit_vulkan() {
+void MVRender::Renderer::quit_vulkan() {
     spdlog::info("Waiting for GPU to idle.");
-    vkDeviceWaitIdle(this->vk_logical_device);
-    vkb::destroy_device(this->vkb_logical_device);
-    vkDestroySurfaceKHR(this->vk_instance, this->vk_surface, nullptr);
-    vkb::destroy_instance(this->vkb_instance);
+    vkDeviceWaitIdle(m_vk_logical_device);
+    vkb::destroy_device(m_vkb_logical_device);
+    vkDestroySurfaceKHR(m_vk_instance, m_vk_surface, nullptr);
+    vkb::destroy_instance(m_vkb_instance);
     spdlog::info("Freed Vulkan resources.");
 }

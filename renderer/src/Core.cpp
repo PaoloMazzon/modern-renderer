@@ -5,7 +5,7 @@
 MVR_API MVR_Result mvr_Initialize(MVR_InitializeParams *params) {
     MVR_Result res = MVR_RESULT_SUCCESS;
     try {
-        MVRender::Renderer::instance().m_initialize_vulkan(*params);
+        MVRender::Renderer::instance().initialize_vulkan(*params);
     } catch (MVRender::Exception& r) {
         res = r.result();
     }
@@ -14,5 +14,5 @@ MVR_API MVR_Result mvr_Initialize(MVR_InitializeParams *params) {
 }
 
 MVR_API void mvr_Quit() {
-    MVRender::Renderer::instance().m_quit_vulkan();
+    MVRender::Renderer::instance().quit_vulkan();
 }

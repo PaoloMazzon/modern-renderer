@@ -11,15 +11,15 @@ namespace MVRender {
         Renderer() {}
 
         // Internal vulkan state
-        VkInstance vk_instance;
-        VkSurfaceKHR vk_surface;
-        VkPhysicalDevice vk_physical_device;
-        VkDevice vk_logical_device;
-        VkQueue vk_queue; // this is a graphics/compute queue
+        VkInstance m_vk_instance;
+        VkSurfaceKHR m_vk_surface;
+        VkPhysicalDevice m_vk_physical_device;
+        VkDevice m_vk_logical_device;
+        VkQueue m_vk_queue; // this is a graphics/compute queue
 
         // vk-bootstrap state
-        vkb::Instance vkb_instance;
-        vkb::Device vkb_logical_device;
+        vkb::Instance m_vkb_instance;
+        vkb::Device m_vkb_logical_device;
 
     public:
         // Singleton pattern - the class is destroyed at program end
@@ -32,7 +32,7 @@ namespace MVRender {
         void operator=(Renderer const&) = delete;
 
         // Internal rendering methods
-        void m_initialize_vulkan(MVR_InitializeParams& params);
-        void m_quit_vulkan();
+        void initialize_vulkan(MVR_InitializeParams& params);
+        void quit_vulkan();
     };
 }
