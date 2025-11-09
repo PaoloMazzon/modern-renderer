@@ -7,6 +7,25 @@
 #include "render/Logging.hpp"
 
 void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
+    m_initialize_params = params;
+    initialize_instance();
+    build_surface_format();
+    initialize_swapchain();
+    spdlog::info("Finished initializing renderer.");
+}
+
+void MVRender::Renderer::quit_vulkan() {
+    spdlog::info("Waiting for GPU to idle.");
+    vkDeviceWaitIdle(m_vk_logical_device);
+
+    // Destroy subsystems
+    quit_instance();
+    quit_swapchain();
+
+    spdlog::info("Freed Vulkan resources.");
+}
+
+void MVRender::Renderer::initialize_instance() {
     // Get SDL requested layers
     uint32_t count;
     const char * const *extensions = SDL_Vulkan_GetInstanceExtensions(&count);
@@ -16,7 +35,7 @@ void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     builder.set_app_name("MVR")
             .use_default_debug_messenger()
             .require_api_version(1, 3, 0)
-            .request_validation_layers(params.debug);
+            .request_validation_layers(m_initialize_params.debug);
     for (uint32_t i = 0; i < count; i++)
         builder.enable_extension(extensions[i]);
     auto inst_ret = builder.build();
@@ -29,7 +48,7 @@ void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     spdlog::info("Created Vulkan instance.");
 
     // Create the surface
-    if (!SDL_Vulkan_CreateSurface(params.window, m_vk_instance, VK_NULL_HANDLE, &m_vk_surface)) {
+    if (!SDL_Vulkan_CreateSurface(m_initialize_params.window, m_vk_instance, VK_NULL_HANDLE, &m_vk_surface)) {
         throw MVRender::Exception(MVR_RESULT_CRITICAL_SDL_ERROR, std::format("Failed to create Vulkan surface, SDL error {}", SDL_GetError()));
     }
 
@@ -94,11 +113,57 @@ void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     spdlog::info("Created graphics/compute queue.");
 }
 
-void MVRender::Renderer::quit_vulkan() {
-    spdlog::info("Waiting for GPU to idle.");
-    vkDeviceWaitIdle(m_vk_logical_device);
+void MVRender::Renderer::quit_instance() {
     vkb::destroy_device(m_vkb_logical_device);
     vkDestroySurfaceKHR(m_vk_instance, m_vk_surface, nullptr);
     vkb::destroy_instance(m_vkb_instance);
-    spdlog::info("Freed Vulkan resources.");
+
+    spdlog::info("Freed logical device, surface, and instance.");
+}
+
+void MVRender::Renderer::build_surface_format() {
+    // Get the surface formats
+    uint32_t format_count;
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_vk_physical_device, m_vk_surface, &format_count, nullptr);
+    std::vector<VkSurfaceFormatKHR> surface_formats;
+    surface_formats.resize(format_count);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(m_vk_physical_device, m_vk_surface, &format_count, surface_formats.data());
+
+    // According to the hardware database 99.5% of devices have an sRGB format so we'll require it
+    VkSurfaceFormatKHR surface_format = {};
+    bool found_srgb = false;
+    for (auto format: surface_formats) {
+        if ((format.format == VK_FORMAT_B8G8R8A8_SRGB || format.format == VK_FORMAT_R8G8B8A8_SRGB) &&
+            format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+            surface_format = format;
+            found_srgb = true;
+            break;
+        }
+    }
+    if (!found_srgb) {
+        throw Exception(MVR_RESULT_NO_DEVICE, "The device surface does not support an sRGB format.");
+    }
+
+    // And fill out capabilities
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_vk_physical_device, m_vk_surface, &m_surface_format.caps);
+    m_surface_format.width = m_surface_format.caps.currentExtent.width;
+    m_surface_format.height = m_surface_format.caps.currentExtent.height;
+    m_surface_format.max_image_count = m_surface_format.caps.maxImageCount;
+    m_surface_format.min_image_count = m_surface_format.caps.minImageCount;
+    m_surface_format.format = surface_format.format;
+
+    spdlog::info("Built surface format information.");
+}
+
+void MVRender::Renderer::initialize_swapchain() {
+    /*VkSwapchainCreateInfoKHR sc_create_info = {
+            .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+            .oldSwapchain = nullptr, // TODO: Possibly use this later down the line
+            .imageFormat =
+    };*/
+    //vkCreateSwapchainKHR(m_vk_logical_device, &sc_create_info, VK_NULL_HANDLE, &m_vk_swapchain);
+}
+
+void MVRender::Renderer::quit_swapchain() {
+
 }
