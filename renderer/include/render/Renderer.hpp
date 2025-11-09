@@ -30,6 +30,8 @@ namespace MVRender {
         uint32_t max_image_count;
         VkFormat format; // we will simply blit to this at the end of the frame
         VkSurfaceCapabilitiesKHR caps;
+        bool supports_immediate;
+        bool supports_mailbox;
     };
 
     // Internal renderer state
@@ -71,6 +73,9 @@ namespace MVRender {
 
         // Top-level destruction method
         void quit_vulkan();
+
+        // Util
+        VkPresentModeKHR get_present_mode(MVR_PresentMode present_mode); // accounts for available present modes
 
         // Internal
         void initialize_instance(); // also creates the device and surface

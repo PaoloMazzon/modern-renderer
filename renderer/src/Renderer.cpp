@@ -152,16 +152,41 @@ void MVRender::Renderer::build_surface_format() {
     m_surface_format.min_image_count = m_surface_format.caps.minImageCount;
     m_surface_format.format = surface_format.format;
 
+    // Find present modes
+    std::vector<VkPresentModeKHR> present_modes;
+    uint32_t present_mode_count;
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_vk_physical_device, m_vk_surface, &present_mode_count, nullptr);
+    present_modes.resize(present_mode_count);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(m_vk_physical_device, m_vk_surface, &present_mode_count, present_modes.data());
+    for (auto present_mode: present_modes) {
+        if (present_mode == VK_PRESENT_MODE_IMMEDIATE_KHR)
+            m_surface_format.supports_immediate = true;
+        if (present_mode == VK_PRESENT_MODE_MAILBOX_KHR)
+            m_surface_format.supports_mailbox = true;
+    }
+
     spdlog::info("Built surface format information.");
 }
 
+VkPresentModeKHR MVRender::Renderer::get_present_mode(MVR_PresentMode present_mode) {
+    if (present_mode == MVR_PRESENT_MODE_IMMEDIATE && m_surface_format.supports_immediate)
+        return VK_PRESENT_MODE_IMMEDIATE_KHR;
+    if (present_mode == MVR_PRESENT_MODE_TRIPLE_BUFFER && m_surface_format.supports_mailbox)
+        return VK_PRESENT_MODE_MAILBOX_KHR;
+    return VK_PRESENT_MODE_FIFO_KHR;
+}
+
 void MVRender::Renderer::initialize_swapchain() {
-    /*VkSwapchainCreateInfoKHR sc_create_info = {
+    VkSwapchainCreateInfoKHR sc_create_info = {
             .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-            .oldSwapchain = nullptr, // TODO: Possibly use this later down the line
-            .imageFormat =
-    };*/
-    //vkCreateSwapchainKHR(m_vk_logical_device, &sc_create_info, VK_NULL_HANDLE, &m_vk_swapchain);
+            //.oldSwapchain = nullptr, TODO: Possibly use this later down the line
+            .surface = m_vk_surface,
+            .minImageCount = m_surface_format.min_image_count <= 3 ? 3 : m_surface_format.min_image_count,
+            .imageFormat = m_surface_format.format,
+            .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            .presentMode = get_present_mode(m_initialize_params.present_mode),
+    };
+    vkCreateSwapchainKHR(m_vk_logical_device, &sc_create_info, VK_NULL_HANDLE, &m_vk_swapchain);
 }
 
 void MVRender::Renderer::quit_swapchain() {

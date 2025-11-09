@@ -21,10 +21,18 @@ typedef enum {
     MVR_RESULT_SUCCESS = 0,                ///< Everything worked fine
 } MVR_Result;
 
+/// \brief Render present modes, only vsync is guaranteed.
+typedef enum {
+    MVR_PRESENT_MODE_VSYNC = 0,         ///< Wait for vblank, no tearing
+    MVR_PRESENT_MODE_TRIPLE_BUFFER = 1, ///< Mailbox, unlimited framerate with no tearing
+    MVR_PRESENT_MODE_IMMEDIATE = 2,     ///< Replace the image as soon as possible, tearing is possible
+} MVR_PresentMode;
+
 /// \brief Tells the initialize function all necessary options to start the renderer
 typedef struct MVR_InitializeParams_s {
-    SDL_Window *window; ///< SDL window that was created with the `SDL_WINDOW_VULKAN` flag
-    bool debug;         ///< Enables debug features like Vulkan compatibility layers
+    SDL_Window *window;           ///< SDL window that was created with the `SDL_WINDOW_VULKAN` flag
+    bool debug;                   ///< Enables debug features like Vulkan compatibility layers
+    MVR_PresentMode present_mode; ///< Initial present mode
 } MVR_InitializeParams;
 
 #ifdef __cplusplus
