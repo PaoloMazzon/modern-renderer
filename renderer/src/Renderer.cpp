@@ -19,8 +19,8 @@ void MVRender::Renderer::quit_vulkan() {
     vkDeviceWaitIdle(m_vk_logical_device);
 
     // Destroy subsystems
-    quit_instance();
     quit_swapchain();
+    quit_instance();
 
     spdlog::info("Freed Vulkan resources.");
 }
@@ -151,6 +151,7 @@ void MVRender::Renderer::build_surface_format() {
     m_surface_format.max_image_count = m_surface_format.caps.maxImageCount;
     m_surface_format.min_image_count = m_surface_format.caps.minImageCount;
     m_surface_format.format = surface_format.format;
+    m_surface_format.color_space = surface_format.colorSpace;
 
     // Find present modes
     std::vector<VkPresentModeKHR> present_modes;
@@ -183,12 +184,75 @@ void MVRender::Renderer::initialize_swapchain() {
             .surface = m_vk_surface,
             .minImageCount = m_surface_format.min_image_count <= 3 ? 3 : m_surface_format.min_image_count,
             .imageFormat = m_surface_format.format,
+            .imageColorSpace = m_surface_format.color_space,
+            .imageExtent = {
+                    .width = m_surface_format.width,
+                    .height = m_surface_format.height
+            },
+            .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+            .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+            .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
             .presentMode = get_present_mode(m_initialize_params.present_mode),
+            .clipped = true,
     };
-    vkCreateSwapchainKHR(m_vk_logical_device, &sc_create_info, VK_NULL_HANDLE, &m_vk_swapchain);
+    VkResult swapchain_result = vkCreateSwapchainKHR(m_vk_logical_device, &sc_create_info, VK_NULL_HANDLE, &m_vk_swapchain);
+
+    if (swapchain_result != VK_SUCCESS) {
+        throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to create swapchain with Vulkan error {}", static_cast<int>(swapchain_result)));
+    }
+
+    // Get swapchain images
+    std::vector<VkImage> swapchain_images;
+    vkGetSwapchainImagesKHR(m_vk_logical_device, m_vk_swapchain, &m_swapchain_image_count, nullptr);
+    swapchain_images.resize(m_swapchain_image_count);
+    vkGetSwapchainImagesKHR(m_vk_logical_device, m_vk_swapchain, &m_swapchain_image_count, swapchain_images.data());
+
+    // Create per-swapchain resources
+    for (auto image: swapchain_images) {
+        // Create image view
+        VkImageViewCreateInfo image_view_create_info = {
+                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+                .image = image,
+                .viewType = VK_IMAGE_VIEW_TYPE_2D,
+                .format = m_surface_format.format,
+                .components = {
+                        .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+                        .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+                        .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+                        .a = VK_COMPONENT_SWIZZLE_IDENTITY
+                },
+                .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0,
+                    .levelCount = 1,
+                    .baseArrayLayer = 0,
+                    .layerCount = 1,
+                }
+        };
+        VkImageView image_view;
+        VkResult image_view_result = vkCreateImageView(m_vk_logical_device, &image_view_create_info, nullptr, &image_view);
+
+        if (image_view_result != VK_SUCCESS) {
+            throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to create swapchain image view, Vulkan error {}", static_cast<int>(image_view_result)));
+        }
+
+        SwapchainResources swapchain_resources = {
+                .swapchain_image = image,
+                .swapchain_image_view = image_view,
+        };
+        m_swapchain_res.push_back(swapchain_resources);
+    }
+
+    spdlog::info("Successfully created swapchain.");
 }
 
 void MVRender::Renderer::quit_swapchain() {
+    // Destroy the image views
+    for (auto swapchain_resource: m_swapchain_res) {
+        vkDestroyImageView(m_vk_logical_device, swapchain_resource.swapchain_image_view, nullptr);
+    }
 
+    vkDestroySwapchainKHR(m_vk_logical_device, m_vk_swapchain, nullptr);
 }

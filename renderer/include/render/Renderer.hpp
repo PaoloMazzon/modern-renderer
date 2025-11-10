@@ -10,7 +10,6 @@ namespace MVRender {
     struct SwapchainResources {
         VkImage swapchain_image;
         VkImageView swapchain_image_view;
-        VkSemaphore image_available_semaphore;
     };
 
     // Resources that are per frame-in-flight
@@ -29,6 +28,7 @@ namespace MVRender {
         uint32_t min_image_count;
         uint32_t max_image_count;
         VkFormat format; // we will simply blit to this at the end of the frame
+        VkColorSpaceKHR color_space;
         VkSurfaceCapabilitiesKHR caps;
         bool supports_immediate;
         bool supports_mailbox;
@@ -37,22 +37,25 @@ namespace MVRender {
     // Internal renderer state
     class Renderer {
     private:
-        Renderer() {}
+        Renderer() = default;
 
-        MVR_InitializeParams m_initialize_params;
+        MVR_InitializeParams m_initialize_params{};
 
         // Internal vulkan state
-        VkInstance m_vk_instance;
-        VkSurfaceKHR m_vk_surface;
-        SurfaceFormat m_surface_format;
-        VkPhysicalDevice m_vk_physical_device;
-        VkDevice m_vk_logical_device;
-        VkQueue m_vk_queue; // this is a graphics/compute queue
-        VkSwapchainKHR m_vk_swapchain;
+        VkInstance m_vk_instance{};
+        VkSurfaceKHR m_vk_surface{};
+        SurfaceFormat m_surface_format{};
+        VkPhysicalDevice m_vk_physical_device{};
+        VkDevice m_vk_logical_device{};
+        VkQueue m_vk_queue{}; // this is a graphics/compute queue
+        VkSwapchainKHR m_vk_swapchain{};
 
         // Synchronization
+        uint32_t m_swapchain_image_count{};
+        uint64_t frame_count{}; // for timeline semaphores
         std::vector<SwapchainResources> m_swapchain_res;
         std::vector<FrameResources> m_frame_res;
+        VkSemaphore timeline_semaphore{};
 
         // vk-bootstrap state
         vkb::Instance m_vkb_instance;
