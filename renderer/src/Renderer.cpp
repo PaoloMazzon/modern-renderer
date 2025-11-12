@@ -3,8 +3,10 @@
 #include <SDL3/SDL_vulkan.h>
 #include <format>
 #include <spdlog/spdlog.h>
+
 #include "render/Renderer.hpp"
 #include "render/Logging.hpp"
+#include "render/Constants.hpp"
 
 void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     m_initialize_params = params;
@@ -12,15 +14,18 @@ void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     build_surface_format();
     initialize_swapchain();
     initialize_sync();
+    initialize_frame_resources();
     begin_frame();
     spdlog::info("Finished initializing renderer.");
 }
 
 void MVRender::Renderer::quit_vulkan() {
     spdlog::info("Waiting for GPU to idle.");
+    end_frame();
     vkDeviceWaitIdle(m_vk_logical_device);
 
     // Destroy subsystems
+    quit_frame_resources();
     quit_sync();
     quit_swapchain();
     quit_instance();
@@ -112,6 +117,7 @@ void MVRender::Renderer::initialize_instance() {
         throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, std::format("Failed to create the device queue, Vulkan error {}", static_cast<uint32_t>(graphics_queue_ret.full_error().vk_result)));
     }
     m_vk_queue = graphics_queue_ret.value();
+    m_queue_family_index = m_vkb_logical_device.get_queue_index(vkb::QueueType::graphics).value();
 
     spdlog::info("Created graphics/compute queue.");
 }
@@ -172,7 +178,7 @@ void MVRender::Renderer::build_surface_format() {
     spdlog::info("Built surface format information.");
 }
 
-VkPresentModeKHR MVRender::Renderer::get_present_mode(MVR_PresentMode present_mode) {
+VkPresentModeKHR MVRender::Renderer::get_present_mode(MVR_PresentMode present_mode) const {
     if (present_mode == MVR_PRESENT_MODE_IMMEDIATE && m_surface_format.supports_immediate)
         return VK_PRESENT_MODE_IMMEDIATE_KHR;
     if (present_mode == MVR_PRESENT_MODE_TRIPLE_BUFFER && m_surface_format.supports_mailbox)
@@ -280,6 +286,49 @@ void MVRender::Renderer::initialize_sync() {
 void MVRender::Renderer::quit_sync() {
     vkDestroySemaphore(m_vk_logical_device, m_timeline_semaphore, nullptr);
 }
+
+void MVRender::Renderer::initialize_frame_resources() {
+    // Create command pool
+    VkCommandPoolCreateInfo command_pool_create_info = {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .queueFamilyIndex = m_queue_family_index,
+    };
+    VkResult command_pool_result = vkCreateCommandPool(m_vk_logical_device, &command_pool_create_info, nullptr, &m_command_pool);
+    if (command_pool_result != VK_SUCCESS) {
+        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create command pool, Vulkan error {}", static_cast<int>(command_pool_result)));
+    }
+
+    // Create per-frame resources
+    for (int i = 0; i < FRAMES_IN_FLIGHT; i++) {
+        VkCommandBuffer command_buffers[3];
+        VkCommandBufferAllocateInfo allocate_info = {
+                .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+                .commandPool = m_command_pool,
+                .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+                .commandBufferCount = 3,
+        };
+        VkResult allocate_result = vkAllocateCommandBuffers(m_vk_logical_device, &allocate_info, command_buffers);
+        if (allocate_result != VK_SUCCESS) {
+            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create command buffers, Vulkan error {}", static_cast<int>(allocate_result)));
+        }
+
+        FrameResources res = {
+                .copy_commands = command_buffers[0],
+                .compute_commands = command_buffers[1],
+                .draw_commands = command_buffers[2],
+        };
+
+        m_frame_res.push_back(res);
+    }
+    spdlog::info("Created per-frame resources.");
+}
+
+void MVRender::Renderer::quit_frame_resources() {
+    vkDestroyCommandPool(m_vk_logical_device, m_command_pool, nullptr);
+    spdlog::info("Freed per-frame resources.");
+}
+
 
 void MVRender::Renderer::begin_frame() {
 

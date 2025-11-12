@@ -17,8 +17,6 @@ namespace MVRender {
         VkCommandBuffer copy_commands;
         VkCommandBuffer compute_commands;
         VkCommandBuffer draw_commands;
-        VkFence frame_in_use_fence;
-        VkSemaphore render_finished_semaphore;
     };
 
     // Information about the surface
@@ -49,6 +47,8 @@ namespace MVRender {
         VkDevice m_vk_logical_device;
         VkQueue m_vk_queue; // this is a graphics/compute queue
         VkSwapchainKHR m_vk_swapchain;
+        VkCommandPool m_command_pool;
+        uint32_t m_queue_family_index;
 
         // Synchronization
         uint32_t m_swapchain_image_count;
@@ -78,7 +78,7 @@ namespace MVRender {
         void quit_vulkan();
 
         // Util
-        VkPresentModeKHR get_present_mode(MVR_PresentMode present_mode); // accounts for available present modes
+        VkPresentModeKHR get_present_mode(MVR_PresentMode present_mode) const; // accounts for available present modes
 
         // Internal
         void initialize_instance(); // also creates the device and surface
@@ -91,6 +91,9 @@ namespace MVRender {
 
         void initialize_sync();
         void quit_sync();
+
+        void initialize_frame_resources();
+        void quit_frame_resources();
 
         void begin_frame();
         void end_frame();
