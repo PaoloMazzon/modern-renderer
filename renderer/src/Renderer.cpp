@@ -256,3 +256,24 @@ void MVRender::Renderer::quit_swapchain() {
 
     vkDestroySwapchainKHR(m_vk_logical_device, m_vk_swapchain, nullptr);
 }
+
+void MVRender::Renderer::initialize_sync() {
+    VkSemaphoreTypeCreateInfo timeline_create_info = {
+            .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
+            .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
+            .initialValue = 0,
+    };
+    VkSemaphoreCreateInfo semaphore_create_info = {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+                .pNext = &timeline_create_info
+    };
+    VkResult result = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info, nullptr, &m_timeline_semaphore);
+    if (result != VK_SUCCESS) {
+        throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to create timeline semaphore, Vulkan error {}", static_cast<int>(result)));
+    }
+    spdlog::info("Create timeline semaphore.");
+}
+
+void MVRender::Renderer::quit_sync() {
+    vkDestroySemaphore(m_vk_logical_device, m_timeline_semaphore, nullptr);
+}

@@ -42,20 +42,20 @@ namespace MVRender {
         MVR_InitializeParams m_initialize_params{};
 
         // Internal vulkan state
-        VkInstance m_vk_instance{};
-        VkSurfaceKHR m_vk_surface{};
-        SurfaceFormat m_surface_format{};
-        VkPhysicalDevice m_vk_physical_device{};
-        VkDevice m_vk_logical_device{};
-        VkQueue m_vk_queue{}; // this is a graphics/compute queue
-        VkSwapchainKHR m_vk_swapchain{};
+        VkInstance m_vk_instance;
+        VkSurfaceKHR m_vk_surface;
+        SurfaceFormat m_surface_format;
+        VkPhysicalDevice m_vk_physical_device;
+        VkDevice m_vk_logical_device;
+        VkQueue m_vk_queue; // this is a graphics/compute queue
+        VkSwapchainKHR m_vk_swapchain;
 
         // Synchronization
-        uint32_t m_swapchain_image_count{};
-        uint64_t frame_count{}; // for timeline semaphores
+        uint32_t m_swapchain_image_count;
+        uint64_t m_frame_count; // for timeline semaphores
         std::vector<SwapchainResources> m_swapchain_res;
         std::vector<FrameResources> m_frame_res;
-        VkSemaphore timeline_semaphore{};
+        VkSemaphore m_timeline_semaphore;
 
         // vk-bootstrap state
         vkb::Instance m_vkb_instance;
@@ -82,9 +82,14 @@ namespace MVRender {
 
         // Internal
         void initialize_instance(); // also creates the device and surface
+        void quit_instance();
+
         void build_surface_format();
+
         void initialize_swapchain();
         void quit_swapchain();
-        void quit_instance();
+
+        void initialize_sync();
+        void quit_sync();
     };
 }
