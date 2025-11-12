@@ -50,6 +50,8 @@ int main() {
                 spdlog::info("Received quit signal.", nullptr);
             }
         }
+
+        mvr_PresentFrame();
     }
 
     mvr_Quit();

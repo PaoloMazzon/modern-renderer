@@ -18,6 +18,7 @@ typedef enum {
     MVR_RESULT_CRITICAL_VULKAN_ERROR = -3, ///< General error from Vulkan that cannot be recovered
     MVR_RESULT_SDL_ERROR = 1,              ///< General SDL error
     MVR_RESULT_VULKAN_ERROR = 2,           ///< General Vulkan error
+    MVR_RESULT_OUT_OF_DATE = 3,            ///< Swapchain was reset
     MVR_RESULT_SUCCESS = 0,                ///< Everything worked fine
 } MVR_Result;
 

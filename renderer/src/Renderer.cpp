@@ -11,6 +11,8 @@ void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     initialize_instance();
     build_surface_format();
     initialize_swapchain();
+    initialize_sync();
+    begin_frame();
     spdlog::info("Finished initializing renderer.");
 }
 
@@ -19,6 +21,7 @@ void MVRender::Renderer::quit_vulkan() {
     vkDeviceWaitIdle(m_vk_logical_device);
 
     // Destroy subsystems
+    quit_sync();
     quit_swapchain();
     quit_instance();
 
@@ -200,7 +203,7 @@ void MVRender::Renderer::initialize_swapchain() {
     VkResult swapchain_result = vkCreateSwapchainKHR(m_vk_logical_device, &sc_create_info, VK_NULL_HANDLE, &m_vk_swapchain);
 
     if (swapchain_result != VK_SUCCESS) {
-        throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to create swapchain with Vulkan error {}", static_cast<int>(swapchain_result)));
+        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain with Vulkan error {}", static_cast<int>(swapchain_result)));
     }
 
     // Get swapchain images
@@ -235,7 +238,7 @@ void MVRender::Renderer::initialize_swapchain() {
         VkResult image_view_result = vkCreateImageView(m_vk_logical_device, &image_view_create_info, nullptr, &image_view);
 
         if (image_view_result != VK_SUCCESS) {
-            throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to create swapchain image view, Vulkan error {}", static_cast<int>(image_view_result)));
+            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain image view, Vulkan error {}", static_cast<int>(image_view_result)));
         }
 
         SwapchainResources swapchain_resources = {
@@ -269,11 +272,19 @@ void MVRender::Renderer::initialize_sync() {
     };
     VkResult result = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info, nullptr, &m_timeline_semaphore);
     if (result != VK_SUCCESS) {
-        throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to create timeline semaphore, Vulkan error {}", static_cast<int>(result)));
+        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create timeline semaphore, Vulkan error {}", static_cast<int>(result)));
     }
     spdlog::info("Create timeline semaphore.");
 }
 
 void MVRender::Renderer::quit_sync() {
     vkDestroySemaphore(m_vk_logical_device, m_timeline_semaphore, nullptr);
+}
+
+void MVRender::Renderer::begin_frame() {
+
+}
+
+void MVRender::Renderer::end_frame() {
+
 }

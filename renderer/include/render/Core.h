@@ -7,6 +7,10 @@
 /// \return Returns MVR_RESULT_SUCCESS if everything worked
 MVR_API MVR_Result mvr_Initialize(MVR_InitializeParams *params);
 
+/// \brief Does necessary presenting tasks at the end of each frame
+/// \return Returns MVR_RESULT_SUCCESS if everything worked or MVR_RESULT_OUT_OF_DATE if the swapchain was reset
+MVR_API MVR_Result mvr_PresentFrame();
+
 /// \brief Frees all renderer resources
 MVR_API void mvr_Quit();
 

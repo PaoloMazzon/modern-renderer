@@ -91,5 +91,8 @@ namespace MVRender {
 
         void initialize_sync();
         void quit_sync();
+
+        void begin_frame();
+        void end_frame();
     };
 }
