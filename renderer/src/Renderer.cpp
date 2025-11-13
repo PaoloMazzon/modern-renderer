@@ -248,8 +248,8 @@ void MVRender::Renderer::initialize_swapchain() {
         }
 
         SwapchainResources swapchain_resources = {
-                .swapchain_image = image,
-                .swapchain_image_view = image_view,
+                .image = image,
+                .image_view = image_view,
         };
         m_swapchain_res.push_back(swapchain_resources);
     }
@@ -260,7 +260,7 @@ void MVRender::Renderer::initialize_swapchain() {
 void MVRender::Renderer::quit_swapchain() {
     // Destroy the image views
     for (auto swapchain_resource: m_swapchain_res) {
-        vkDestroyImageView(m_vk_logical_device, swapchain_resource.swapchain_image_view, nullptr);
+        vkDestroyImageView(m_vk_logical_device, swapchain_resource.image_view, nullptr);
     }
 
     vkDestroySwapchainKHR(m_vk_logical_device, m_vk_swapchain, nullptr);
@@ -270,7 +270,7 @@ void MVRender::Renderer::initialize_sync() {
     VkSemaphoreTypeCreateInfo timeline_create_info = {
             .sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO,
             .semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE,
-            .initialValue = m_frame_count - FRAMES_IN_FLIGHT,
+            .initialValue = m_frame_count,
     };
     VkSemaphoreCreateInfo semaphore_create_info = {
                 .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
@@ -313,10 +313,34 @@ void MVRender::Renderer::initialize_frame_resources() {
             throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create command buffers, Vulkan error {}", static_cast<int>(allocate_result)));
         }
 
+        // Create image ready semaphore
+        VkSemaphore semaphore;
+        VkSemaphoreCreateInfo semaphore_create_info = {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        };
+        VkResult semaphore_result = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info, nullptr, &semaphore);
+
+        if (semaphore_result != VK_SUCCESS) {
+            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain semaphore, Vulkan error {}", static_cast<int>(semaphore_result)));
+        }
+
+        // Create submit ready semaphore
+        VkSemaphore semaphore2;
+        VkSemaphoreCreateInfo semaphore_create_info2 = {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        };
+        VkResult semaphore_result2 = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info2, nullptr, &semaphore2);
+
+        if (semaphore_result2 != VK_SUCCESS) {
+            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain semaphore, Vulkan error {}", static_cast<int>(semaphore_result2)));
+        }
+
         FrameResources res = {
                 .copy_commands = command_buffers[0],
                 .compute_commands = command_buffers[1],
                 .draw_commands = command_buffers[2],
+                .image_ready_semaphore = semaphore,
+                .submit_ready_semaphore = semaphore2,
         };
 
         m_frame_res.push_back(res);
@@ -332,7 +356,7 @@ void MVRender::Renderer::quit_frame_resources() {
 
 void MVRender::Renderer::begin_frame() {
     // Wait for frames-in-flight to catch up
-    uint64_t wait_value = m_frame_count - FRAMES_IN_FLIGHT;
+    uint64_t wait_value = m_frame_count - FRAMES_IN_FLIGHT + 1;
     VkSemaphoreWaitInfo semaphore_wait_info = {
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
         .semaphoreCount = 1,
@@ -355,28 +379,7 @@ void MVRender::Renderer::begin_frame() {
     vkBeginCommandBuffer(frame->draw_commands, &begin_info);
 
     // Now that we have a frame in flight, acquire the swapchain image
-    // TODO: Redo synchronization
-    // wait for frames in flight
-    // -------------------------
-    // wait on -> frame_counter - (frames in flight)
-    //
-    // vkAcquireNextImageKHR
-    // ---------------------
-    // no signal
-    //
-    // vkQueueSubmit
-    // -------------
-    // waits on -> nothing
-    // signals to -> frame_counter + 1
-    //
-    // vkQueuePresentKHR
-    // -----------------
-    // waits on -> frame_counter + 1
-    //
-    // after frame
-    // -----------
-    // frame_counter += 1
-    vkAcquireNextImageKHR(m_vk_logical_device, m_vk_swapchain, UINT64_MAX, nullptr, nullptr, &m_current_sc_image);
+    vkAcquireNextImageKHR(m_vk_logical_device, m_vk_swapchain, UINT64_MAX, frame->image_ready_semaphore, nullptr, &m_current_sc_image);
 }
 
 void MVRender::Renderer::end_frame() {
@@ -392,23 +395,24 @@ void MVRender::Renderer::end_frame() {
             frame->compute_commands,
             frame->draw_commands,
     };
-    uint64_t previous_frame = m_frame_count - 1;
+    uint64_t signal_values[] = {m_frame_count + 1, 1};
     VkTimelineSemaphoreSubmitInfo timelineSubmit = {
             .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
-            .waitSemaphoreValueCount = 1,
-            .pWaitSemaphoreValues = &previous_frame,
-            .signalSemaphoreValueCount = 1,
-            .pSignalSemaphoreValues = &m_frame_count,
+            .signalSemaphoreValueCount = 2,
+            .pSignalSemaphoreValues = signal_values,
     };
+    VkSemaphore signal_semaphores[] = {m_timeline_semaphore, frame->submit_ready_semaphore};
+    VkPipelineStageFlags wait_stage_mask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
     VkSubmitInfo submit_info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = &timelineSubmit,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &m_timeline_semaphore,
+        .pWaitSemaphores = &frame->image_ready_semaphore,
+        .pWaitDstStageMask = &wait_stage_mask,
         .commandBufferCount = 3,
         .pCommandBuffers = buffers,
-        .signalSemaphoreCount = 1,
-        .pSignalSemaphores = &m_timeline_semaphore,
+        .signalSemaphoreCount = 2,
+        .pSignalSemaphores = signal_semaphores,
     };
     VkResult queue_submit_result = vkQueueSubmit(m_vk_queue, 1, &submit_info, nullptr);
 
@@ -417,16 +421,10 @@ void MVRender::Renderer::end_frame() {
     }
 
     // Present the queue
-    VkTimelineSemaphoreSubmitInfoKHR timeline_present_info = {
-            .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
-            .waitSemaphoreValueCount = 1,
-            .pWaitSemaphoreValues = &m_frame_count,
-    };
     VkPresentInfoKHR present_info = {
             .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
-            .pNext = &timeline_present_info,
             .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &m_timeline_semaphore,
+            .pWaitSemaphores = &frame->submit_ready_semaphore,
             .swapchainCount = 1,
             .pSwapchains = &m_vk_swapchain,
             .pImageIndices = &m_current_sc_image,

@@ -8,8 +8,8 @@
 namespace MVRender {
     // Resources that are per swapchain image
     struct SwapchainResources {
-        VkImage swapchain_image;
-        VkImageView swapchain_image_view;
+        VkImage image;
+        VkImageView image_view;
     };
 
     // Resources that are per frame-in-flight
@@ -17,6 +17,8 @@ namespace MVRender {
         VkCommandBuffer copy_commands;
         VkCommandBuffer compute_commands;
         VkCommandBuffer draw_commands;
+        VkSemaphore image_ready_semaphore; // TODO: This should be per-swapchain-image
+        VkSemaphore submit_ready_semaphore;
     };
 
     // Information about the surface
