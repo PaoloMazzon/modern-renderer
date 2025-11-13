@@ -53,7 +53,7 @@ namespace MVRender {
 
         // Synchronization
         uint32_t m_swapchain_image_count;
-        uint64_t m_frame_count; // for timeline semaphores
+        uint64_t m_frame_count = 5; // for timeline semaphores
         std::vector<SwapchainResources> m_swapchain_res;
         std::vector<FrameResources> m_frame_res;
         VkSemaphore m_timeline_semaphore;
