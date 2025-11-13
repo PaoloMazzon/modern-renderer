@@ -18,6 +18,7 @@ target_link_libraries(${PROJECT_NAME}
         Vulkan::Vulkan
         vk-bootstrap::vk-bootstrap
         GPUOpen::VulkanMemoryAllocator
+        fmt::fmt
         spdlog::spdlog
         SDL3::SDL3
 )

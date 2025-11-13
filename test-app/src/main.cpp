@@ -30,8 +30,9 @@ int main() {
 
     // Initialize renderer
     MVR_InitializeParams params = {
-            .window = window,
-            .debug = true,
+        .window = window,
+        .debug = true,
+        .present_mode = MVR_PRESENT_MODE_TRIPLE_BUFFER
     };
     MVR_Result result = mvr_Initialize(&params);
 
