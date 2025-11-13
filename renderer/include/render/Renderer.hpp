@@ -49,6 +49,7 @@ namespace MVRender {
         VkSwapchainKHR m_vk_swapchain;
         VkCommandPool m_command_pool;
         uint32_t m_queue_family_index;
+        uint32_t m_current_sc_image;
 
         // Synchronization
         uint32_t m_swapchain_image_count;

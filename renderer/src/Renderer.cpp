@@ -331,9 +331,47 @@ void MVRender::Renderer::quit_frame_resources() {
 
 
 void MVRender::Renderer::begin_frame() {
+    // Wait for frames-in-flight to catch up
+    uint64_t wait_value = m_frame_count - FRAMES_IN_FLIGHT;
+    VkSemaphoreWaitInfo semaphore_wait_info = {
+        .sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO,
+        .semaphoreCount = 1,
+        .pSemaphores = &m_timeline_semaphore,
+        .pValues = &wait_value,
+    };
+    vkWaitSemaphores(m_vk_logical_device, &semaphore_wait_info, UINT64_MAX);
 
+    // Reset and begin this frame's command buffers
+    const FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
+    vkResetCommandBuffer(frame->compute_commands, 0);
+    vkResetCommandBuffer(frame->copy_commands, 0);
+    vkResetCommandBuffer(frame->draw_commands, 0);
+
+    VkCommandBufferBeginInfo begin_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+    };
+    vkBeginCommandBuffer(frame->compute_commands, &begin_info);
+    vkBeginCommandBuffer(frame->copy_commands, &begin_info);
+    vkBeginCommandBuffer(frame->draw_commands, &begin_info);
+
+    // Now that we have a frame in flight, acquire the swapchain image
+    vkAcquireNextImageKHR(m_vk_logical_device, m_vk_swapchain, UINT64_MAX, nullptr, nullptr, &m_current_sc_image);
 }
 
 void MVRender::Renderer::end_frame() {
+    // TODO: This
+    // End command buffers for the frame
+    const FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
+    vkEndCommandBuffer(frame->compute_commands);
+    vkEndCommandBuffer(frame->copy_commands);
+    vkEndCommandBuffer(frame->draw_commands);
 
+    // Prepare the final frame submission
+    VkSubmitInfo submit_info = {
+
+    };
+
+    // Present the image
+
+    m_frame_count += 1;
 }
