@@ -457,7 +457,17 @@ void MVRender::Renderer::end_frame() {
             .pSwapchains = &m_vk_swapchain,
             .pImageIndices = &m_current_sc_image,
     };
-    vkQueuePresentKHR(m_vk_queue, &present_info);
+    VkResult queue_present_result = vkQueuePresentKHR(m_vk_queue, &present_info);
+
+    if (queue_present_result != VK_SUBOPTIMAL_KHR && queue_present_result != VK_ERROR_OUT_OF_DATE_KHR && queue_present_result != VK_SUCCESS) {
+        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to present queue, Vulkan error {}", static_cast<int>(queue_submit_result)));
+    }
 
     m_frame_count += 1;
+
+    if (queue_present_result != VK_SUCCESS) {
+        throw Exception(MVR_RESULT_OUT_OF_DATE, "Swapchain out of date.");
+    }
+
+    // TODO: Rebuild the swapchain if its out of date
 }
