@@ -247,9 +247,33 @@ void MVRender::Renderer::initialize_swapchain() {
             throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain image view, Vulkan error {}", static_cast<int>(image_view_result)));
         }
 
+        // Create image ready semaphore
+        VkSemaphore semaphore;
+        VkSemaphoreCreateInfo semaphore_create_info = {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        };
+        VkResult semaphore_result = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info, nullptr, &semaphore);
+
+        if (semaphore_result != VK_SUCCESS) {
+            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain semaphore, Vulkan error {}", static_cast<int>(semaphore_result)));
+        }
+
+        // Create submit ready semaphore
+        VkSemaphore semaphore2;
+        VkSemaphoreCreateInfo semaphore_create_info2 = {
+                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+        };
+        VkResult semaphore_result2 = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info2, nullptr, &semaphore2);
+
+        if (semaphore_result2 != VK_SUCCESS) {
+            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain semaphore, Vulkan error {}", static_cast<int>(semaphore_result2)));
+        }
+
         SwapchainResources swapchain_resources = {
                 .image = image,
                 .image_view = image_view,
+                .image_ready_semaphore = semaphore,
+                .submit_ready_semaphore = semaphore2,
         };
         m_swapchain_res.push_back(swapchain_resources);
     }
@@ -261,6 +285,8 @@ void MVRender::Renderer::quit_swapchain() {
     // Destroy the image views
     for (auto swapchain_resource: m_swapchain_res) {
         vkDestroyImageView(m_vk_logical_device, swapchain_resource.image_view, nullptr);
+        vkDestroySemaphore(m_vk_logical_device, swapchain_resource.submit_ready_semaphore, nullptr);
+        vkDestroySemaphore(m_vk_logical_device, swapchain_resource.image_ready_semaphore, nullptr);
     }
 
     vkDestroySwapchainKHR(m_vk_logical_device, m_vk_swapchain, nullptr);
@@ -313,34 +339,10 @@ void MVRender::Renderer::initialize_frame_resources() {
             throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create command buffers, Vulkan error {}", static_cast<int>(allocate_result)));
         }
 
-        // Create image ready semaphore
-        VkSemaphore semaphore;
-        VkSemaphoreCreateInfo semaphore_create_info = {
-                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        };
-        VkResult semaphore_result = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info, nullptr, &semaphore);
-
-        if (semaphore_result != VK_SUCCESS) {
-            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain semaphore, Vulkan error {}", static_cast<int>(semaphore_result)));
-        }
-
-        // Create submit ready semaphore
-        VkSemaphore semaphore2;
-        VkSemaphoreCreateInfo semaphore_create_info2 = {
-                .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
-        };
-        VkResult semaphore_result2 = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info2, nullptr, &semaphore2);
-
-        if (semaphore_result2 != VK_SUCCESS) {
-            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain semaphore, Vulkan error {}", static_cast<int>(semaphore_result2)));
-        }
-
         FrameResources res = {
                 .copy_commands = command_buffers[0],
                 .compute_commands = command_buffers[1],
                 .draw_commands = command_buffers[2],
-                .image_ready_semaphore = semaphore,
-                .submit_ready_semaphore = semaphore2,
         };
 
         m_frame_res.push_back(res);
@@ -379,12 +381,38 @@ void MVRender::Renderer::begin_frame() {
     vkBeginCommandBuffer(frame->draw_commands, &begin_info);
 
     // Now that we have a frame in flight, acquire the swapchain image
-    vkAcquireNextImageKHR(m_vk_logical_device, m_vk_swapchain, UINT64_MAX, frame->image_ready_semaphore, nullptr, &m_current_sc_image);
+    vkAcquireNextImageKHR(m_vk_logical_device, m_vk_swapchain, UINT64_MAX, m_swapchain_res[m_frame_count % m_swapchain_image_count].image_ready_semaphore, nullptr, &m_current_sc_image);
 }
 
 void MVRender::Renderer::end_frame() {
-    // End command buffers for the frame
     const FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
+
+    // TODO: Remove this garbage (this exists to pretend there is stuff drawn so it dont instantly crash)
+    VkImageMemoryBarrier2 barrier{
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
+            .srcStageMask = VK_PIPELINE_STAGE_2_NONE,
+            .srcAccessMask = VK_ACCESS_2_NONE,
+            .dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+            .dstAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+            .newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+            .image = m_swapchain_res[m_current_sc_image].image,
+            .subresourceRange = {
+                    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                    .baseMipLevel = 0, .levelCount = 1,
+                    .baseArrayLayer = 0, .layerCount = 1,
+            },
+    };
+
+    VkDependencyInfo depInfo{
+            .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
+            .imageMemoryBarrierCount = 1,
+            .pImageMemoryBarriers = &barrier,
+    };
+
+    vkCmdPipelineBarrier2(frame->draw_commands, &depInfo);
+
+    // End command buffers for the frame
     vkEndCommandBuffer(frame->compute_commands);
     vkEndCommandBuffer(frame->copy_commands);
     vkEndCommandBuffer(frame->draw_commands);
@@ -401,13 +429,13 @@ void MVRender::Renderer::end_frame() {
             .signalSemaphoreValueCount = 2,
             .pSignalSemaphoreValues = signal_values,
     };
-    VkSemaphore signal_semaphores[] = {m_timeline_semaphore, frame->submit_ready_semaphore};
+    VkSemaphore signal_semaphores[] = {m_timeline_semaphore, m_swapchain_res[m_frame_count % m_swapchain_image_count].submit_ready_semaphore};
     VkPipelineStageFlags wait_stage_mask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
     VkSubmitInfo submit_info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = &timelineSubmit,
         .waitSemaphoreCount = 1,
-        .pWaitSemaphores = &frame->image_ready_semaphore,
+        .pWaitSemaphores = &m_swapchain_res[m_frame_count % m_swapchain_image_count].image_ready_semaphore,
         .pWaitDstStageMask = &wait_stage_mask,
         .commandBufferCount = 3,
         .pCommandBuffers = buffers,
@@ -424,7 +452,7 @@ void MVRender::Renderer::end_frame() {
     VkPresentInfoKHR present_info = {
             .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
             .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &frame->submit_ready_semaphore,
+            .pWaitSemaphores = &m_swapchain_res[m_frame_count % m_swapchain_image_count].submit_ready_semaphore,
             .swapchainCount = 1,
             .pSwapchains = &m_vk_swapchain,
             .pImageIndices = &m_current_sc_image,
