@@ -430,7 +430,7 @@ void MVRender::Renderer::end_frame() {
             .pSignalSemaphoreValues = signal_values,
     };
     VkSemaphore signal_semaphores[] = {m_timeline_semaphore, m_swapchain_res[m_frame_count % m_swapchain_image_count].submit_ready_semaphore};
-    VkPipelineStageFlags wait_stage_mask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    VkPipelineStageFlags wait_stage_mask = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
     VkSubmitInfo submit_info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = &timelineSubmit,
