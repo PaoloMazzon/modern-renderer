@@ -1,4 +1,5 @@
 #include <vulkan/vulkan.h>
+#include <vulkan/vk_enum_string_helper.h>
 #include <VkBootstrap.h>
 #include <SDL3/SDL_vulkan.h>
 #include <fmt/core.h>
@@ -48,7 +49,8 @@ void MVRender::Renderer::initialize_instance() {
         builder.enable_extension(extensions[i]);
     auto inst_ret = builder.build();
     if (!inst_ret) {
-        throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create Vulkan instance, Vulkan error {}", static_cast<uint32_t>(inst_ret.full_error().vk_result)));
+        const char *string_result = string_VkResult(inst_ret.vk_result());
+        throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create Vulkan instance, Vulkan error {}", string_result));
     }
     m_vkb_instance = inst_ret.value();
     m_vk_instance = inst_ret.value().instance;
@@ -105,7 +107,8 @@ void MVRender::Renderer::initialize_instance() {
             .add_pNext(&timeline_semaphore_features)
             .build();
     if (!dev_ret) {
-        throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create the logical device, Vulkan error {}", static_cast<uint32_t>(dev_ret.full_error().vk_result)));
+        const char *string_result = string_VkResult(dev_ret.vk_result());
+        throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create the logical device, Vulkan error {}", string_result));
     }
     m_vkb_logical_device = dev_ret.value();
     m_vk_logical_device = m_vkb_logical_device.device;
@@ -114,7 +117,8 @@ void MVRender::Renderer::initialize_instance() {
 
     auto graphics_queue_ret = m_vkb_logical_device.get_queue (vkb::QueueType::graphics);
     if (!graphics_queue_ret)  {
-        throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create the device queue, Vulkan error {}", static_cast<uint32_t>(graphics_queue_ret.full_error().vk_result)));
+        const char *string_result = string_VkResult(graphics_queue_ret.vk_result());
+        throw MVRender::Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create the device queue, Vulkan error {}", string_result));
     }
     m_vk_queue = graphics_queue_ret.value();
     m_queue_family_index = m_vkb_logical_device.get_queue_index(vkb::QueueType::graphics).value();
@@ -209,7 +213,8 @@ void MVRender::Renderer::initialize_swapchain() {
     VkResult swapchain_result = vkCreateSwapchainKHR(m_vk_logical_device, &sc_create_info, VK_NULL_HANDLE, &m_vk_swapchain);
 
     if (swapchain_result != VK_SUCCESS) {
-        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain with Vulkan error {}", static_cast<int>(swapchain_result)));
+        const char *result_string = string_VkResult(swapchain_result);
+        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain with Vulkan error {}", result_string));
     }
 
     // Get swapchain images
@@ -244,7 +249,8 @@ void MVRender::Renderer::initialize_swapchain() {
         VkResult image_view_result = vkCreateImageView(m_vk_logical_device, &image_view_create_info, nullptr, &image_view);
 
         if (image_view_result != VK_SUCCESS) {
-            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain image view, Vulkan error {}", static_cast<int>(image_view_result)));
+            const char *string_result = string_VkResult(image_view_result);
+            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain image view, Vulkan error {}", string_result));
         }
 
         // Create image ready semaphore
@@ -255,7 +261,8 @@ void MVRender::Renderer::initialize_swapchain() {
         VkResult semaphore_result = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info, nullptr, &semaphore);
 
         if (semaphore_result != VK_SUCCESS) {
-            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain semaphore, Vulkan error {}", static_cast<int>(semaphore_result)));
+            const char *string_result = string_VkResult(semaphore_result);
+            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain semaphore, Vulkan error {}", string_result));
         }
 
         // Create submit ready semaphore
@@ -266,7 +273,8 @@ void MVRender::Renderer::initialize_swapchain() {
         VkResult semaphore_result2 = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info2, nullptr, &semaphore2);
 
         if (semaphore_result2 != VK_SUCCESS) {
-            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain semaphore, Vulkan error {}", static_cast<int>(semaphore_result2)));
+            const char *string_result = string_VkResult(semaphore_result2);
+            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create swapchain semaphore, Vulkan error {}", string_result));
         }
 
         SwapchainResources swapchain_resources = {
@@ -304,7 +312,8 @@ void MVRender::Renderer::initialize_sync() {
     };
     VkResult result = vkCreateSemaphore(m_vk_logical_device, &semaphore_create_info, nullptr, &m_timeline_semaphore);
     if (result != VK_SUCCESS) {
-        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create timeline semaphore, Vulkan error {}", static_cast<int>(result)));
+        const char *string_result = string_VkResult(result);
+        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create timeline semaphore, Vulkan error {}", string_result));
     }
     spdlog::info("Create timeline semaphore.");
 }
@@ -322,7 +331,8 @@ void MVRender::Renderer::initialize_frame_resources() {
     };
     VkResult command_pool_result = vkCreateCommandPool(m_vk_logical_device, &command_pool_create_info, nullptr, &m_command_pool);
     if (command_pool_result != VK_SUCCESS) {
-        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create command pool, Vulkan error {}", static_cast<int>(command_pool_result)));
+        const char *string_result = string_VkResult(command_pool_result);
+        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create command pool, Vulkan error {}", string_result));
     }
 
     // Create per-frame resources
@@ -336,7 +346,8 @@ void MVRender::Renderer::initialize_frame_resources() {
         };
         VkResult allocate_result = vkAllocateCommandBuffers(m_vk_logical_device, &allocate_info, command_buffers);
         if (allocate_result != VK_SUCCESS) {
-            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create command buffers, Vulkan error {}", static_cast<int>(allocate_result)));
+            const char *string_result = string_VkResult(allocate_result);
+            throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create command buffers, Vulkan error {}", string_result));
         }
 
         FrameResources res = {
@@ -445,7 +456,8 @@ void MVRender::Renderer::end_frame() {
     VkResult queue_submit_result = vkQueueSubmit(m_vk_queue, 1, &submit_info, nullptr);
 
     if (queue_submit_result != VK_SUCCESS) {
-        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to submit queue, Vulkan error {}", static_cast<int>(queue_submit_result)));
+        const char *string_result = string_VkResult(queue_submit_result);
+        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to submit queue, Vulkan error {}", string_result));
     }
 
     // Present the queue
@@ -460,14 +472,13 @@ void MVRender::Renderer::end_frame() {
     VkResult queue_present_result = vkQueuePresentKHR(m_vk_queue, &present_info);
 
     if (queue_present_result != VK_SUBOPTIMAL_KHR && queue_present_result != VK_ERROR_OUT_OF_DATE_KHR && queue_present_result != VK_SUCCESS) {
-        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to present queue, Vulkan error {}", static_cast<int>(queue_submit_result)));
+        const char *string_result = string_VkResult(queue_present_result);
+        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to present queue, Vulkan error {}", string_result));
     }
 
     m_frame_count += 1;
 
     if (queue_present_result != VK_SUCCESS) {
-        throw Exception(MVR_RESULT_OUT_OF_DATE, "Swapchain out of date.");
+        // TODO: Rebuild the swapchain if its out of date
     }
-
-    // TODO: Rebuild the swapchain if its out of date
 }

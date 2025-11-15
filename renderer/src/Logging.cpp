@@ -1,5 +1,4 @@
 #include <string>
-#include <mutex>
 #include "render/Logging.hpp"
 #include "render/Core.h"
 

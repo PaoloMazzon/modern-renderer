@@ -18,21 +18,21 @@ typedef enum {
     MVR_RESULT_CRITICAL_VULKAN_ERROR = -3, ///< General error from Vulkan that cannot be recovered
     MVR_RESULT_SDL_ERROR = 1,              ///< General SDL error
     MVR_RESULT_VULKAN_ERROR = 2,           ///< General Vulkan error
-    MVR_RESULT_OUT_OF_DATE = 3,            ///< Swapchain was reset
     MVR_RESULT_SUCCESS = 0,                ///< Everything worked fine
 } MVR_Result;
 
-/// \brief Render present modes, only vsync is guaranteed.
+/// \brief Render present modes, only vsync is guaranteed. If you request something other
+/// that vsync and it isn't available on the host machine, vsync will be used instead.
 typedef enum {
     MVR_PRESENT_MODE_VSYNC = 0,         ///< Wait for vblank, no tearing
-    MVR_PRESENT_MODE_TRIPLE_BUFFER = 1, ///< Mailbox, unlimited framerate with no tearing
+    MVR_PRESENT_MODE_TRIPLE_BUFFER = 1, ///< Mailbox, unlimited framerate/latency with no tearing
     MVR_PRESENT_MODE_IMMEDIATE = 2,     ///< Replace the image as soon as possible, tearing is possible
 } MVR_PresentMode;
 
 /// \brief Tells the initialize function all necessary options to start the renderer
 typedef struct MVR_InitializeParams_s {
     SDL_Window *window;           ///< SDL window that was created with the `SDL_WINDOW_VULKAN` flag
-    bool debug;                   ///< Enables debug features like Vulkan compatibility layers
+    bool debug;                   ///< Enables debug features like Vulkan validation layers
     MVR_PresentMode present_mode; ///< Initial present mode
 } MVR_InitializeParams;
 
