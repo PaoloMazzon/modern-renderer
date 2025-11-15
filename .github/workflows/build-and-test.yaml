@@ -22,7 +22,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build build-essential gcc libvulkan-dev libvulkan1
+          sudo apt-get install -y cmake ninja-build build-essential gcc libvulkan-dev libvulkan1 vulkan-tools vulkan-utility-libraries-dev
 
       - name: Configure CMake
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_UNIX_CONSOLE_BUILD=ON
