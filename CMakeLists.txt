@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.20)
-project(modern_renderer_top LANGUAGES CXX)
+project(modern_renderer)
+
+option(BUILD_SAMPLE_APP "Build test app for the renderer" OFF)
+option(BUILD_TESTS "Build the test suite for the renderer" OFF)
 
 # Let subprojects see 3rd/ modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/3rd")
@@ -27,7 +30,34 @@ else()
     add_compile_options(-Wall -Wextra -pedantic)
 endif()
 
-# Core projects
-add_subdirectory(renderer)
-add_subdirectory(test-app)
-add_subdirectory(tests)
+set(EXTERNAL_CXX_FILES ${CMAKE_SOURCE_DIR}/3rd/SPIRV-Reflect/spirv_reflect.cpp)
+set(CXX_FILES
+        renderer/src/Core.cpp
+        renderer/src/Logging.cpp
+        renderer/src/Renderer.cpp
+)
+
+add_library(${PROJECT_NAME} ${CXX_FILES} ${EXTERNAL_CXX_FILES})
+
+target_include_directories(${PROJECT_NAME} PUBLIC renderer/include/)
+
+# Add dependencies
+find_package(Vulkan REQUIRED)
+target_link_libraries(${PROJECT_NAME}
+        PUBLIC
+        Vulkan::Vulkan
+        vk-bootstrap::vk-bootstrap
+        GPUOpen::VulkanMemoryAllocator
+        fmt::fmt
+        spdlog::spdlog
+        SDL3::SDL3
+)
+
+# Build app and tests
+if (BUILD_SAMPLE_APP)
+    add_subdirectory(test-app)
+endif()
+
+if (BUILD_TESTS)
+    add_subdirectory(tests)
+endif()
