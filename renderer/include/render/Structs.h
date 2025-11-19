@@ -36,6 +36,9 @@ typedef struct MVR_InitializeParams_s {
     MVR_PresentMode present_mode; ///< Initial present mode
 } MVR_InitializeParams;
 
+/// \brief Handle for a buffer
+typedef uint64_t MVR_Buffer;
+
 #ifdef __cplusplus
 };
 #endif
