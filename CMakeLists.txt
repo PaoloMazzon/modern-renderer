@@ -35,6 +35,7 @@ set(CXX_FILES
         renderer/src/Core.cpp
         renderer/src/Logging.cpp
         renderer/src/Renderer.cpp
+        renderer/src/Buffers.cpp
 )
 
 add_library(${PROJECT_NAME} ${CXX_FILES} ${EXTERNAL_CXX_FILES})
