@@ -2,6 +2,7 @@
 #pragma once
 #include <VkBootstrap.h>
 #include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
 #include <cinttypes>
 #include "render/Structs.h"
 
@@ -66,6 +67,9 @@ namespace MVRender {
         vkb::Instance m_vkb_instance;
         vkb::Device m_vkb_logical_device;
 
+        // Memory
+        VmaAllocator m_vma;
+
     public:
         // Singleton pattern - the class is destroyed at program end
         static Renderer& instance() {
@@ -99,6 +103,9 @@ namespace MVRender {
 
         void initialize_frame_resources();
         void quit_frame_resources();
+
+        void initialize_vma();
+        void quit_vma();
 
         void begin_frame();
         void end_frame();

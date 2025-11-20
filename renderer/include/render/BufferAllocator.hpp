@@ -4,6 +4,13 @@
 #include <vector>
 
 namespace MVRender {
+    struct BufferAllocatorCreateInfo {
+        VmaAllocator allocator;
+        VkDevice logical_device;
+        VkDeviceSize page_size;
+        uint32_t queue_family_index;
+    };
+
     // MVR_Buffer is a pointer to one of these structs
     struct BufferDescriptor {
         VkBuffer buffer;
@@ -14,8 +21,11 @@ namespace MVRender {
     // For internal use in BufferAllocator
     struct BufferPage {
         VkBuffer vram_buffer; // actual vulkan device memory
+        VmaAllocation vram_allocation;
         VkBuffer staging_buffer; // staging buffer that will be copied to vram
+        VmaAllocation staging_allocation;
         VkDeviceSize offset; // current offset for new writes
+        VkDeviceSize size; // size of this page
         void *data; // data for the staging buffer
     };
 
@@ -29,14 +39,22 @@ namespace MVRender {
         // Pages of memory, both the staging and device memory
         std::vector<BufferPage> m_buffer_pages;
 
-        // How many pages are actually in use
-        uint32_t m_page_count = 0;
-
-        // Size of each page
+        // Size of each page by default
         VkDeviceSize m_page_size = 0;
+
+        // Allocates and appends a new page to the allocator, can fail
+        void append_page(VkDeviceSize size);
+
+        // Finds/creates a page with at least size size, can fail
+        BufferPage *find_page(VkDeviceSize size);
+
+        // Internal Vulkan handles
+        VmaAllocator m_vma;
+        VkDevice m_logical_device;
+        uint32_t m_queue_family_index;
     public:
         BufferAllocator() = default;
-        explicit BufferAllocator(VkDeviceSize page_size);
+        explicit BufferAllocator(BufferAllocatorCreateInfo &create_info);
         ~BufferAllocator();
 
         // Returns a handle to a temporary buffer of size size and returns a pointer to its first byte of data

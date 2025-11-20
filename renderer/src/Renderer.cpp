@@ -16,6 +16,7 @@ void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     initialize_swapchain();
     initialize_sync();
     initialize_frame_resources();
+    initialize_vma();
     begin_frame();
     spdlog::info("Finished initializing renderer.");
 }
@@ -26,6 +27,7 @@ void MVRender::Renderer::quit_vulkan() {
     vkDeviceWaitIdle(m_vk_logical_device);
 
     // Destroy subsystems
+    quit_vma();
     quit_frame_resources();
     quit_sync();
     quit_swapchain();
@@ -366,6 +368,26 @@ void MVRender::Renderer::quit_frame_resources() {
     spdlog::info("Freed per-frame resources.");
 }
 
+void MVRender::Renderer::initialize_vma() {
+    VmaAllocatorCreateInfo allocator_create_info = {
+        .device = m_vk_logical_device,
+        .instance = m_vk_instance,
+        .vulkanApiVersion = VK_MAKE_VERSION(1, 3, 0),
+    };
+    VkResult allocator_result = vmaCreateAllocator(&allocator_create_info, &m_vma);
+
+    if (!allocator_result != VK_SUCCESS) {
+        const char *string_result = string_VkResult(allocator_result);
+        throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create allocator, {}", string_result));
+    }
+
+    spdlog::info("Initialized VMA");
+}
+
+void MVRender::Renderer::quit_vma() {
+    vmaDestroyAllocator(m_vma);
+    spdlog::info("Freed VMA");
+}
 
 void MVRender::Renderer::begin_frame() {
     // Wait for frames-in-flight to catch up
