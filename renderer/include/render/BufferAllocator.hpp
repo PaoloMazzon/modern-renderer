@@ -9,13 +9,14 @@ namespace MVRender {
         VkDevice logical_device;
         VkDeviceSize page_size;
         uint32_t queue_family_index;
+        VkPhysicalDeviceProperties device_properties;
     };
 
     // MVR_Buffer is a pointer to one of these structs
     struct BufferDescriptor {
-        VkBuffer buffer;
-        VkDeviceSize offset;
-        VkDeviceSize size;
+        VkBuffer buffer; // the device-local buffer
+        VkDeviceSize offset; // offset in that buffer for this virtual buffer
+        VkDeviceSize size; // amount of bytes pertaining to this buffer
     };
 
     // For internal use in BufferAllocator
@@ -42,16 +43,22 @@ namespace MVRender {
         // Size of each page by default
         VkDeviceSize m_page_size = 0;
 
+        // Internal Vulkan handles
+        VmaAllocator m_vma;
+        VkDevice m_logical_device;
+        uint32_t m_queue_family_index;
+
+        // Minimum required alignment for memory to be placed in pages
+        VkDeviceSize m_minimum_alignment = 0;
+
         // Allocates and appends a new page to the allocator, can fail
         void append_page(VkDeviceSize size);
 
         // Finds/creates a page with at least size size, can fail
         BufferPage *find_page(VkDeviceSize size);
 
-        // Internal Vulkan handles
-        VmaAllocator m_vma;
-        VkDevice m_logical_device;
-        uint32_t m_queue_family_index;
+        // Attempts to get a buffer out of the allocator, can fail
+        BufferDescriptor *get_buffer_descriptor(VkDeviceSize size);
     public:
         BufferAllocator() = default;
         explicit BufferAllocator(BufferAllocatorCreateInfo &create_info);

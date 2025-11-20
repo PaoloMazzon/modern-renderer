@@ -88,11 +88,41 @@ MVRender::BufferPage *MVRender::BufferAllocator::find_page(VkDeviceSize size) {
     return found_page;
 }
 
+// This will return current + size, where size is rounded up to the nearest alignment
+static VkDeviceSize move_by_alignment(VkDeviceSize current, VkDeviceSize increase, VkDeviceSize alignment) {
+    if (increase % alignment != 0) {
+        VkDeviceSize additional = alignment - (increase % alignment);
+        return current + increase + additional;
+    }
+    return current + increase;
+}
+
+MVRender::BufferDescriptor *MVRender::BufferAllocator::get_buffer_descriptor(VkDeviceSize size) {
+    BufferPage *page = find_page(size);
+
+    BufferDescriptor descriptor = {
+        .buffer = page->vram_buffer,
+        .offset = page->offset,
+        .size = size,
+    };
+    m_buffers.emplace_back(descriptor);
+
+    page->offset = move_by_alignment(page->offset, size, m_minimum_alignment);
+
+    return &m_buffers.back();
+}
+
 MVRender::BufferAllocator::BufferAllocator(MVRender::BufferAllocatorCreateInfo &create_info) {
     m_page_size = create_info.page_size;
     m_vma = create_info.allocator;
     m_logical_device = create_info.logical_device;
     m_queue_family_index = create_info.queue_family_index;
+
+    // We need to find the minimum alignment we care about (minimum being the highest value
+    // of all the alignments of the types of data this thing supports)
+    VkDeviceSize align1 = create_info.device_properties.limits.minStorageBufferOffsetAlignment;
+    VkDeviceSize align2 = create_info.device_properties.limits.minTexelBufferOffsetAlignment;
+    m_minimum_alignment = align1 > align2 ? align1 : align2;
 }
 
 MVRender::BufferAllocator::~BufferAllocator() {
