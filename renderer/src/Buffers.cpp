@@ -1,6 +1,6 @@
 #include <vk_mem_alloc.h>
 #include <vulkan/vk_enum_string_helper.h>
-#include <spdlog/fmt/bundled/xchar.h>
+#include <fmt/core.h>
 #include "render/Renderer.hpp"
 #include "render/BufferAllocator.hpp"
 #include "render/Buffers.h"
@@ -131,6 +131,7 @@ MVRender::BufferAllocator::~BufferAllocator() {
 
 MVR_Buffer MVRender::BufferAllocator::allocate_temp_buffer(VkDeviceSize size, void **data) {
     // TODO: This
+    return MVR_INVALID_HANDLE;
 }
 
 void MVRender::BufferAllocator::record_copy_commands(VkCommandBuffer command_buffer) {

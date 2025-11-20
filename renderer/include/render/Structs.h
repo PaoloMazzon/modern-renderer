@@ -36,6 +36,9 @@ typedef struct MVR_InitializeParams_s {
     MVR_PresentMode present_mode; ///< Initial present mode
 } MVR_InitializeParams;
 
+/// \brief This means the handle is bad
+#define MVR_INVALID_HANDLE UINT64_MAX
+
 /// \brief Handle for a buffer
 typedef uint64_t MVR_Buffer;
 
