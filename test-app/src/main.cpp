@@ -37,7 +37,7 @@ int main() {
     MVR_Result result = mvr_Initialize(&params);
 
     if (result != MVR_RESULT_SUCCESS) {
-        spdlog::error("Failed to create renderer.");
+        spdlog::error("Failed to create renderer, {}", mvr_GetError());
         return 1;
     }
 

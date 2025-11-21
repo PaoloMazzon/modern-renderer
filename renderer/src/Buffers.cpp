@@ -104,6 +104,7 @@ MVRender::BufferDescriptor *MVRender::BufferAllocator::get_buffer_descriptor(VkD
         .buffer = page->vram_buffer,
         .offset = page->offset,
         .size = size,
+        .data = static_cast<uint8_t*>(page->data) + page->offset,
     };
     m_buffers.emplace_back(descriptor);
 
@@ -126,12 +127,16 @@ MVRender::BufferAllocator::BufferAllocator(MVRender::BufferAllocatorCreateInfo &
 }
 
 MVRender::BufferAllocator::~BufferAllocator() {
-    // TODO: Destroy all pages
+    for (auto page: m_buffer_pages) {
+        vmaDestroyBuffer(m_vma, page.vram_buffer, page.vram_allocation);
+        vmaDestroyBuffer(m_vma, page.staging_buffer, page.staging_allocation);
+    }
 }
 
 MVR_Buffer MVRender::BufferAllocator::allocate_temp_buffer(VkDeviceSize size, void **data) {
-    // TODO: This
-    return MVR_INVALID_HANDLE;
+    BufferDescriptor *descriptor = get_buffer_descriptor(size);
+    *data = descriptor->data;
+    return reinterpret_cast<MVR_Buffer>(descriptor);
 }
 
 void MVRender::BufferAllocator::record_copy_commands(VkCommandBuffer command_buffer) {
@@ -148,8 +153,16 @@ MVR_API MVR_Result mvr_CreateTempBuffer(uint64_t size, void *data, MVR_Buffer *b
 }
 
 MVR_API MVR_Result mvr_AllocateTempBuffer(uint64_t size, void **data, MVR_Buffer *buffer) {
-    // TODO: This
-    return MVR_RESULT_FAILURE;
+    MVR_Result status = MVR_RESULT_SUCCESS;
+    try {
+        auto &instance = MVRender::Renderer::instance();
+        *buffer = instance.get_buffer_allocator().allocate_temp_buffer(size, data);
+    } catch (MVRender::Exception& r) {
+        status = r.result();
+        *data = nullptr;
+        *buffer = MVR_INVALID_HANDLE;
+    }
+    return status;
 }
 
 MVR_API MVR_Result mvr_CreateBuffer(uint64_t size, void *data, MVR_Buffer *buffer) {

@@ -2,6 +2,7 @@
 #pragma once
 #include <vulkan/vulkan.h>
 #include <vector>
+#include "render/Structs.h"
 
 namespace MVRender {
     struct BufferAllocatorCreateInfo {
@@ -17,6 +18,7 @@ namespace MVRender {
         VkBuffer buffer; // the device-local buffer
         VkDeviceSize offset; // offset in that buffer for this virtual buffer
         VkDeviceSize size; // amount of bytes pertaining to this buffer
+        void *data; // memory-mapped host-visible pointer to the start of the range
     };
 
     // For internal use in BufferAllocator

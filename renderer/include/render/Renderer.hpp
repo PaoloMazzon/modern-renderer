@@ -4,6 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 #include <cinttypes>
+#include "render/BufferAllocator.hpp"
 #include "render/Structs.h"
 
 namespace MVRender {
@@ -22,6 +23,7 @@ namespace MVRender {
         VkCommandBuffer copy_commands;
         VkCommandBuffer compute_commands;
         VkCommandBuffer draw_commands;
+        BufferAllocator buffer_allocator;
     };
 
     // Information about the surface
@@ -49,6 +51,7 @@ namespace MVRender {
         VkSurfaceKHR m_vk_surface;
         SurfaceFormat m_surface_format;
         VkPhysicalDevice m_vk_physical_device;
+        VkPhysicalDeviceProperties m_vk_physical_device_properties;
         VkDevice m_vk_logical_device;
         VkQueue m_vk_queue; // this is a graphics/compute queue
         VkSwapchainKHR m_vk_swapchain;
@@ -87,7 +90,8 @@ namespace MVRender {
         void quit_vulkan();
 
         // Util
-        VkPresentModeKHR get_present_mode(MVR_PresentMode present_mode) const; // accounts for available present modes
+        [[nodiscard]] VkPresentModeKHR get_present_mode(MVR_PresentMode present_mode) const; // accounts for available present modes
+        BufferAllocator &get_buffer_allocator(); // for current frame
 
         // Internal
         void initialize_instance(); // also creates the device and surface

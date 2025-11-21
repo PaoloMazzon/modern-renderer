@@ -36,6 +36,10 @@ void MVRender::Renderer::quit_vulkan() {
     spdlog::info("Freed Vulkan resources.");
 }
 
+MVRender::BufferAllocator &MVRender::Renderer::get_buffer_allocator() {
+    return m_frame_res.at(m_frame_count % FRAMES_IN_FLIGHT).buffer_allocator;
+}
+
 void MVRender::Renderer::initialize_instance() {
     // Get SDL requested layers
     uint32_t count;
@@ -76,6 +80,7 @@ void MVRender::Renderer::initialize_instance() {
         throw MVRender::Exception(MVR_RESULT_NO_DEVICE, fmt::format("Failed to find a suitable physical device, Vulkan error {}", static_cast<uint32_t>(phys_ret.full_error().vk_result)));
     }
     m_vk_physical_device = phys_ret.value().physical_device;
+    m_vk_physical_device_properties = phys_ret->properties;
 
     spdlog::info("Found suitable physical device {}.", phys_ret.value().name);
 
@@ -352,10 +357,19 @@ void MVRender::Renderer::initialize_frame_resources() {
             throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create command buffers, Vulkan error {}", string_result));
         }
 
+        BufferAllocatorCreateInfo buffer_allocator_create_info = {
+                .allocator = m_vma,
+                .logical_device = m_vk_logical_device,
+                .page_size = VRAM_PAGE_SIZE,
+                .queue_family_index = m_queue_family_index,
+                .device_properties = m_vk_physical_device_properties,
+        };
+
         FrameResources res = {
                 .copy_commands = command_buffers[0],
                 .compute_commands = command_buffers[1],
                 .draw_commands = command_buffers[2],
+                .buffer_allocator = BufferAllocator(buffer_allocator_create_info),
         };
 
         m_frame_res.push_back(res);
@@ -370,13 +384,14 @@ void MVRender::Renderer::quit_frame_resources() {
 
 void MVRender::Renderer::initialize_vma() {
     VmaAllocatorCreateInfo allocator_create_info = {
+        .physicalDevice = m_vk_physical_device,
         .device = m_vk_logical_device,
         .instance = m_vk_instance,
         .vulkanApiVersion = VK_MAKE_VERSION(1, 3, 0),
     };
     VkResult allocator_result = vmaCreateAllocator(&allocator_create_info, &m_vma);
 
-    if (!allocator_result != VK_SUCCESS) {
+    if (allocator_result != VK_SUCCESS) {
         const char *string_result = string_VkResult(allocator_result);
         throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create allocator, {}", string_result));
     }
@@ -401,7 +416,7 @@ void MVRender::Renderer::begin_frame() {
     vkWaitSemaphores(m_vk_logical_device, &semaphore_wait_info, UINT64_MAX);
 
     // Reset and begin this frame's command buffers
-    const FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
+    FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
     vkResetCommandBuffer(frame->compute_commands, 0);
     vkResetCommandBuffer(frame->copy_commands, 0);
     vkResetCommandBuffer(frame->draw_commands, 0);
@@ -413,12 +428,15 @@ void MVRender::Renderer::begin_frame() {
     vkBeginCommandBuffer(frame->copy_commands, &begin_info);
     vkBeginCommandBuffer(frame->draw_commands, &begin_info);
 
+    // Prepare temp buffers
+    frame->buffer_allocator.begin_frame();
+
     // Now that we have a frame in flight, acquire the swapchain image
     vkAcquireNextImageKHR(m_vk_logical_device, m_vk_swapchain, UINT64_MAX, m_swapchain_res[m_frame_count % m_swapchain_image_count].image_ready_semaphore, nullptr, &m_current_sc_image);
 }
 
 void MVRender::Renderer::end_frame() {
-    const FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
+    FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
 
     // TODO: Remove this garbage (this exists to pretend there is stuff drawn so it dont instantly crash)
     VkImageMemoryBarrier2 barrier{
@@ -444,6 +462,9 @@ void MVRender::Renderer::end_frame() {
     };
 
     vkCmdPipelineBarrier2(frame->draw_commands, &depInfo);
+
+    // Let temp buffer record its commands before ending
+    frame->buffer_allocator.record_copy_commands(frame->copy_commands);
 
     // End command buffers for the frame
     vkEndCommandBuffer(frame->compute_commands);
