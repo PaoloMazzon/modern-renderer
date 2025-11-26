@@ -69,6 +69,9 @@ namespace MVRender {
         // Returns a handle to a temporary buffer of size size and returns a pointer to its first byte of data
         MVR_Buffer allocate_temp_buffer(VkDeviceSize size, void **data);
 
+        // Returns a handle to a permanent buffer of size size, requires a pointer to a buffer descriptor to fill
+        MVR_Buffer allocate_permanent_buffer(VkDeviceSize size, void *data);
+
         // Records necessary copy commands into the copy command buffer
         void record_copy_commands(VkCommandBuffer command_buffer);
 

@@ -73,6 +73,25 @@ namespace MVRender {
         // Memory
         VmaAllocator m_vma;
 
+        // Permanent buffers
+        std::vector<BufferDescriptor> m_permanent_buffers;
+        std::vector<bool> m_permanent_buffer_occupied;
+
+        // Internal subsystems
+        void build_surface_format();
+
+        void initialize_swapchain();
+        void quit_swapchain();
+
+        void initialize_sync();
+        void quit_sync();
+
+        void initialize_frame_resources();
+        void quit_frame_resources();
+
+        void initialize_vma();
+        void quit_vma();
+
     public:
         // Singleton pattern - the class is destroyed at program end
         static Renderer& instance() {
@@ -97,21 +116,19 @@ namespace MVRender {
         void initialize_instance(); // also creates the device and surface
         void quit_instance();
 
-        void build_surface_format();
-
-        void initialize_swapchain();
-        void quit_swapchain();
-
-        void initialize_sync();
-        void quit_sync();
-
-        void initialize_frame_resources();
-        void quit_frame_resources();
-
-        void initialize_vma();
-        void quit_vma();
-
         void begin_frame();
         void end_frame();
+
+        // Gets a new single-use command buffer
+        VkCommandBuffer get_single_use_command_buffer();
+
+        // Submits and waits for a single-use command buffer to finish
+        void submit_single_use_command_buffer(VkCommandBuffer buffer);
+
+        // Returns an empty buffer descriptor stored permanently in the renderer
+        BufferDescriptor *get_buffer_descriptor();
+
+        // Invalidates the descriptor, does not free the contents
+        void remove_buffer_descriptor(BufferDescriptor *descriptor);
     };
 }

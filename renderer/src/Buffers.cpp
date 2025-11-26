@@ -154,6 +154,12 @@ MVR_Buffer MVRender::BufferAllocator::allocate_temp_buffer(VkDeviceSize size, vo
     return reinterpret_cast<MVR_Buffer>(descriptor);
 }
 
+MVR_Buffer MVRender::BufferAllocator::allocate_permanent_buffer(VkDeviceSize size, void *data) {
+    auto &instance = MVRender::Renderer::instance();
+    // TODO: This
+    return MVR_INVALID_HANDLE;
+}
+
 void MVRender::BufferAllocator::record_copy_commands(VkCommandBuffer command_buffer) {
     // Go through each page, unmap the memory, then add a copy command
     for (auto &page: m_buffer_pages) {
@@ -221,11 +227,6 @@ MVR_API MVR_Result mvr_AllocateTempBuffer(uint64_t size, void **data, MVR_Buffer
 }
 
 MVR_API MVR_Result mvr_CreateBuffer(uint64_t size, void *data, MVR_Buffer *buffer) {
-    // TODO: This
-    return MVR_RESULT_FAILURE;
-}
-
-MVR_API MVR_Result mvr_AllocateBuffer(uint64_t size, void **data, MVR_Buffer *buffer) {
     // TODO: This
     return MVR_RESULT_FAILURE;
 }

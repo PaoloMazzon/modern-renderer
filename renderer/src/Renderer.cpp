@@ -1,3 +1,4 @@
+// This is the core renderer infrastructure, for utilities inside the renderer see RendererUtil.cpp
 #include <vulkan/vulkan.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <VkBootstrap.h>
@@ -36,9 +37,7 @@ void MVRender::Renderer::quit_vulkan() {
     spdlog::info("Freed Vulkan resources.");
 }
 
-MVRender::BufferAllocator &MVRender::Renderer::get_buffer_allocator() {
-    return m_frame_res.at(m_frame_count % FRAMES_IN_FLIGHT).buffer_allocator;
-}
+
 
 void MVRender::Renderer::initialize_instance() {
     // Get SDL requested layers
@@ -187,14 +186,6 @@ void MVRender::Renderer::build_surface_format() {
     }
 
     spdlog::info("Built surface format information.");
-}
-
-VkPresentModeKHR MVRender::Renderer::get_present_mode(MVR_PresentMode present_mode) const {
-    if (present_mode == MVR_PRESENT_MODE_IMMEDIATE && m_surface_format.supports_immediate)
-        return VK_PRESENT_MODE_IMMEDIATE_KHR;
-    if (present_mode == MVR_PRESENT_MODE_TRIPLE_BUFFER && m_surface_format.supports_mailbox)
-        return VK_PRESENT_MODE_MAILBOX_KHR;
-    return VK_PRESENT_MODE_FIFO_KHR;
 }
 
 void MVRender::Renderer::initialize_swapchain() {

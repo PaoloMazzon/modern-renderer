@@ -1,12 +1,16 @@
 /// \brief Internal logging methods
 #pragma once
 #include <iostream>
+#include <vulkan/vulkan_core.h>
 #include "render/Core.h"
 
 namespace MVRender {
     // Sets the internal logging message when an error occurs so the user
     // can grab it with
     void set_error_message(const std::string& msg);
+
+    // Does boilerplate Vulkan error checking, formats the error string as "{msg}, Vulkan error {}"
+    void resolve_vulkan_error(VkResult result, bool critical, const char *msg);
 
     // Wrapper for MVR_Result for more C++y error handling, automatically calls set_error_message
     // Please throw this class as the exception so we have the result automatically saved and also

@@ -35,6 +35,7 @@ set(CXX_FILES
         renderer/src/Core.cpp
         renderer/src/Logging.cpp
         renderer/src/Renderer.cpp
+        renderer/src/RendererUtil.cpp
         renderer/src/Buffers.cpp
         renderer/src/CompileHeaders.cpp
 )

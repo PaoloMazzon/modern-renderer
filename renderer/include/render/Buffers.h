@@ -34,16 +34,6 @@ MVR_API MVR_Result mvr_AllocateTempBuffer(uint64_t size, void **data, MVR_Buffer
 /// \return Returns an MVR_Result status code
 MVR_API MVR_Result mvr_CreateBuffer(uint64_t size, void *data, MVR_Buffer *buffer);
 
-/// \brief Allocates a permanent buffer of given size, returning the buffer and a memory handle
-/// \param size Size of the buffer in bytes
-/// \param data Handle that will be given a pointer to the start of the buffer's memory
-/// \param buffer Pointer to a buffer handle where the new buffer will be placed
-/// \return Returns an MVR_Result status code
-///
-/// With this function, a pointer is provided to where the buffer's memory lives. You call
-/// this function, then you fill in your desired data later with the data pointer.
-MVR_API MVR_Result mvr_AllocateBuffer(uint64_t size, void **data, MVR_Buffer *buffer);
-
 /// \brief Destroys a permanent MVR_Buffer
 /// \param buffer Buffer to destroy
 MVR_API void mvr_DestroyBuffer(MVR_Buffer buffer);

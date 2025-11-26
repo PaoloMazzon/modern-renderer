@@ -12,4 +12,11 @@ TEST_CASE("User-facing error messages") {
         REQUIRE(e.result() == MVR_RESULT_CRITICAL_SDL_ERROR);
         REQUIRE(strcmp(mvr_GetError(), "garbage") == 0);
     }
+
+    try {
+        MVRender::resolve_vulkan_error(VK_ERROR_DEVICE_LOST, true, "garbage");
+    } catch (MVRender::Exception& e) {
+        REQUIRE(e.result() == MVR_RESULT_CRITICAL_VULKAN_ERROR);
+        REQUIRE(strcmp(mvr_GetError(), "garbage") == 0);
+    }
 }
