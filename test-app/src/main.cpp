@@ -1,7 +1,7 @@
 #include <SDL3/SDL.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <render/Core.h>
+#include <render/MVR.h>
 
 const char *WINDOW_TITLE = "Test App";
 const int WINDOW_WIDTH   = 800;
@@ -50,6 +50,14 @@ int main() {
                 keep_window_open = false;
                 spdlog::info("Received quit signal.", nullptr);
             }
+        }
+
+        // Test creating buffers
+        uint8_t garbage[100] = {0};
+        MVR_Buffer buffer;
+        if (mvr_CreateTempBuffer(100, &garbage, &buffer) != MVR_RESULT_SUCCESS) {
+            spdlog::error("Failed to create buffer, {}", mvr_GetError());
+            return 1;
         }
 
         mvr_PresentFrame();

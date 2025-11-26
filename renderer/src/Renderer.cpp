@@ -15,8 +15,8 @@ void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     build_surface_format();
     initialize_swapchain();
     initialize_sync();
-    initialize_frame_resources();
     initialize_vma();
+    initialize_frame_resources();
     begin_frame();
     spdlog::info("Finished initializing renderer.");
 }
@@ -27,8 +27,8 @@ void MVRender::Renderer::quit_vulkan() {
     vkDeviceWaitIdle(m_vk_logical_device);
 
     // Destroy subsystems
-    quit_vma();
     quit_frame_resources();
+    quit_vma();
     quit_sync();
     quit_swapchain();
     quit_instance();
@@ -379,6 +379,8 @@ void MVRender::Renderer::initialize_frame_resources() {
 
 void MVRender::Renderer::quit_frame_resources() {
     vkDestroyCommandPool(m_vk_logical_device, m_command_pool, nullptr);
+    // Intentionally free items in the frame resource list to call their destructors
+    m_frame_res.resize(0);
     spdlog::info("Freed per-frame resources.");
 }
 

@@ -19,7 +19,7 @@ void MVRender::BufferAllocator::append_page(VkDeviceSize size) {
         .pQueueFamilyIndices = &m_queue_family_index,
     };
     VmaAllocationCreateInfo staging_allocation_create_info = {
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+        .flags = 0,
         .usage = VMA_MEMORY_USAGE_CPU_TO_GPU,
         .requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
     };
@@ -52,9 +52,16 @@ void MVRender::BufferAllocator::append_page(VkDeviceSize size) {
         &device_allocation_create_info, &out_device_buffer, &out_device_allocation, &device_allocation_info);
 
     if (device_buffer_result != VK_SUCCESS) {
+        // Gotta throw out the staging buffer
+        vmaDestroyBuffer(m_vma, out_stage_buffer, out_stage_allocation);
+
         const char *string_result = string_VkResult(device_buffer_result);
         throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to allocate device buffer for new page, {}", string_result));
     }
+
+    // Now that we have the memory, we need to map it
+    void *data;
+    VkResult memory_map_result = vmaMapMemory(m_vma, out_stage_allocation, &data);
 
     BufferPage page = {
         .vram_buffer = out_device_buffer,
@@ -63,10 +70,18 @@ void MVRender::BufferAllocator::append_page(VkDeviceSize size) {
         .staging_allocation = out_stage_allocation,
         .offset = 0,
         .size = size,
-        .data = stage_allocation_info.pMappedData,
+        .data = data,
     };
 
     m_buffer_pages.emplace_back(page);
+
+    // If there was a mapping error we will make it unusable for the frame
+    if (memory_map_result != VK_SUCCESS) {
+        m_buffer_pages.at(m_buffer_pages.size() - 1).offset = size;
+
+        const char *string_result = string_VkResult(memory_map_result);
+        throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to map memory for new page, {}", string_result));
+    }
 }
 
 MVRender::BufferPage *MVRender::BufferAllocator::find_page(VkDeviceSize size) {
@@ -140,16 +155,56 @@ MVR_Buffer MVRender::BufferAllocator::allocate_temp_buffer(VkDeviceSize size, vo
 }
 
 void MVRender::BufferAllocator::record_copy_commands(VkCommandBuffer command_buffer) {
-    // TODO: This
+    // Go through each page, unmap the memory, then add a copy command
+    for (auto &page: m_buffer_pages) {
+        vmaUnmapMemory(m_vma, page.staging_allocation);
+        VkBufferCopy2 buffer_region = {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_COPY_2,
+                .size = page.offset,
+        };
+        VkCopyBufferInfo2 copy_buffer = {
+                .sType = VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2,
+                .srcBuffer = page.staging_buffer,
+                .dstBuffer = page.vram_buffer,
+                .regionCount = 1,
+                .pRegions = &buffer_region
+        };
+
+        if (page.offset > 0) {
+            vkCmdCopyBuffer2(command_buffer, &copy_buffer);
+        }
+    }
 }
 
 void MVRender::BufferAllocator::begin_frame() {
-    // TODO: This
+    // We only need to go through each page and reset the offset and remap the page
+    for (auto &page: m_buffer_pages) {
+        page.offset = 0;
+        VkResult result = vmaMapMemory(m_vma, page.staging_allocation, &page.data);
+        if (result != VK_SUCCESS) {
+            const char *string_result = string_VkResult(result);
+            throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to map staging buffer for page, {}", string_result));
+        }
+    }
+
+    // And reset the tracked buffers
+    m_buffers.resize(0);
 }
 
 MVR_API MVR_Result mvr_CreateTempBuffer(uint64_t size, void *data, MVR_Buffer *buffer) {
-    // TODO: This
-    return MVR_RESULT_FAILURE;
+    MVR_Result status = MVR_RESULT_SUCCESS;
+    try {
+        auto &instance = MVRender::Renderer::instance();
+        void *write_data;
+        *buffer = instance.get_buffer_allocator().allocate_temp_buffer(size, &write_data);
+
+        // Write user data into the buffer right away
+        memcpy(write_data, data, size);
+    } catch (MVRender::Exception& r) {
+        status = r.result();
+        *buffer = MVR_INVALID_HANDLE;
+    }
+    return status;
 }
 
 MVR_API MVR_Result mvr_AllocateTempBuffer(uint64_t size, void **data, MVR_Buffer *buffer) {
