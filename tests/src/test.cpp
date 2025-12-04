@@ -17,6 +17,6 @@ TEST_CASE("User-facing error messages") {
         MVRender::resolve_vulkan_error(VK_ERROR_DEVICE_LOST, true, "garbage");
     } catch (MVRender::Exception& e) {
         REQUIRE(e.result() == MVR_RESULT_CRITICAL_VULKAN_ERROR);
-        REQUIRE(strcmp(mvr_GetError(), "garbage") == 0);
+        REQUIRE(strcmp(mvr_GetError(), "garbage, Vulkan error VK_ERROR_DEVICE_LOST") == 0);
     }
 }
