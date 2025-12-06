@@ -80,3 +80,11 @@ void MVRender::Renderer::submit_single_use_command_buffer(VkCommandBuffer buffer
 
     vkFreeCommandBuffers(m_vk_logical_device, m_command_pool, 1, &buffer);
 }
+
+MVRender::BufferDescriptor *MVRender::Renderer::load_permanent_buffer(uint64_t size, void *data) {
+    // TODO: This
+}
+
+void MVRender::Renderer::free_permanent_buffer(BufferDescriptor *buffer) {
+    // TODO: This
+}

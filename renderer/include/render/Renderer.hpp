@@ -92,6 +92,12 @@ namespace MVRender {
         void initialize_vma();
         void quit_vma();
 
+        // Returns an empty buffer descriptor stored permanently in the renderer
+        BufferDescriptor *get_buffer_descriptor();
+
+        // Invalidates the descriptor, does not free the contents
+        void remove_buffer_descriptor(BufferDescriptor *descriptor);
+
     public:
         // Singleton pattern - the class is destroyed at program end
         static Renderer& instance() {
@@ -125,10 +131,8 @@ namespace MVRender {
         // Submits and waits for a single-use command buffer to finish
         void submit_single_use_command_buffer(VkCommandBuffer buffer);
 
-        // Returns an empty buffer descriptor stored permanently in the renderer
-        BufferDescriptor *get_buffer_descriptor();
-
-        // Invalidates the descriptor, does not free the contents
-        void remove_buffer_descriptor(BufferDescriptor *descriptor);
+        // Create and free permanent buffers
+        BufferDescriptor *load_permanent_buffer(uint64_t size, void *data);
+        void free_permanent_buffer(BufferDescriptor *buffer);
     };
 }

@@ -6,6 +6,8 @@
 #include "render/Buffers.h"
 #include "render/Logging.hpp"
 
+#include <filesystem>
+
 void MVRender::BufferAllocator::append_page(VkDeviceSize size) {
     auto &renderer = MVRender::Renderer::instance();
     // Create the staging buffer
@@ -227,10 +229,18 @@ MVR_API MVR_Result mvr_AllocateTempBuffer(uint64_t size, void **data, MVR_Buffer
 }
 
 MVR_API MVR_Result mvr_CreateBuffer(uint64_t size, void *data, MVR_Buffer *buffer) {
-    // TODO: This
-    return MVR_RESULT_FAILURE;
+    MVR_Result status = MVR_RESULT_SUCCESS;
+    *buffer = MVR_INVALID_HANDLE;
+    try {
+        auto &instance = MVRender::Renderer::instance();
+        *buffer = reinterpret_cast<MVR_Buffer>(instance.load_permanent_buffer(size, data));
+    } catch (MVRender::Exception& r) {
+        status = r.result();
+    }
+    return status;
 }
 
 MVR_API void mvr_DestroyBuffer(MVR_Buffer buffer) {
-    // TODO: This
+    auto &instance = MVRender::Renderer::instance();
+    instance.free_permanent_buffer(reinterpret_cast<MVRender::BufferDescriptor *>(buffer));
 }
