@@ -1,4 +1,6 @@
 // Renderer utilities, the core infrastructure is in Renderer.cpp
+#include <vulkan/vk_enum_string_helper.h>
+#include <fmt/core.h>
 #include "render/Renderer.hpp"
 #include "render/BufferAllocator.hpp"
 #include "render/Constants.hpp"
@@ -81,10 +83,106 @@ void MVRender::Renderer::submit_single_use_command_buffer(VkCommandBuffer buffer
     vkFreeCommandBuffers(m_vk_logical_device, m_command_pool, 1, &buffer);
 }
 
+// TODO: Use something more RAII, or otherwise fix this mess.
 MVRender::BufferDescriptor *MVRender::Renderer::load_permanent_buffer(uint64_t size, void *data) {
-    // TODO: This
+    // Create the staging buffer
+    VkBuffer out_stage_buffer;
+    VmaAllocation out_stage_allocation;
+    VkBufferCreateInfo staging_buffer_create_info = {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+            .size = size,
+            .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+            .queueFamilyIndexCount = 1,
+            .pQueueFamilyIndices = &m_queue_family_index,
+    };
+    VmaAllocationCreateInfo staging_allocation_create_info = {
+            .flags = 0,
+            .usage = VMA_MEMORY_USAGE_CPU_TO_GPU,
+            .requiredFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT,
+    };
+    VmaAllocationInfo stage_allocation_info;
+    VkResult stage_buffer_result = vmaCreateBuffer(m_vma, &staging_buffer_create_info,
+                                                   &staging_allocation_create_info, &out_stage_buffer, &out_stage_allocation, &stage_allocation_info);
+
+    if (stage_buffer_result != VK_SUCCESS) {
+        const char *string_result = string_VkResult(stage_buffer_result);
+        throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to allocate staging buffer for new page, {}", string_result));
+    }
+
+    // Create the device buffer
+    VkBuffer out_device_buffer;
+    VmaAllocation out_device_allocation;
+    VkBufferCreateInfo device_buffer_create_info = {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+            .size = size,
+            .usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
+                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT,
+            .queueFamilyIndexCount = 1,
+            .pQueueFamilyIndices = &m_queue_family_index,
+    };
+    VmaAllocationCreateInfo device_allocation_create_info = {
+            .usage = VMA_MEMORY_USAGE_GPU_TO_CPU,
+            .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+    };
+    VmaAllocationInfo device_allocation_info;
+    VkResult device_buffer_result = vmaCreateBuffer(m_vma, &device_buffer_create_info,
+                                                    &device_allocation_create_info, &out_device_buffer, &out_device_allocation, &device_allocation_info);
+
+    if (device_buffer_result != VK_SUCCESS) {
+        // Gotta throw out the staging buffer
+        vmaDestroyBuffer(m_vma, out_stage_buffer, out_stage_allocation);
+
+        const char *string_result = string_VkResult(device_buffer_result);
+        throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to allocate device buffer for new page, {}", string_result));
+    }
+
+    // Now that we have the memory, we need to map it
+    void *mapped_memory;
+    VkResult memory_map_result = vmaMapMemory(m_vma, out_stage_allocation, &mapped_memory);
+
+    // If there was a mapping error we will erase it all
+    if (memory_map_result != VK_SUCCESS) {
+        vmaDestroyBuffer(m_vma, out_stage_buffer, out_stage_allocation);
+        vmaDestroyBuffer(m_vma, out_device_buffer, out_device_allocation);
+        const char *string_result = string_VkResult(memory_map_result);
+        throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to map memory for new page, {}", string_result));
+    }
+
+    // Copy data to device buffer
+    memcpy(mapped_memory, data, size);
+    vmaUnmapMemory(m_vma, out_stage_allocation);
+    try {
+        VkCommandBuffer command_buffer = get_single_use_command_buffer();
+        VkBufferCopy2 region = {
+                .sType = VK_STRUCTURE_TYPE_BUFFER_COPY_2,
+                .size = size,
+        };
+        VkCopyBufferInfo2 copy_buffer_info = {
+                .sType = VK_STRUCTURE_TYPE_COPY_BUFFER_INFO_2,
+                .srcBuffer = out_stage_buffer,
+                .dstBuffer = out_device_buffer,
+                .regionCount = 1,
+                .pRegions = &region,
+        };
+        vkCmdCopyBuffer2(command_buffer, &copy_buffer_info);
+        submit_single_use_command_buffer(command_buffer);
+        vmaDestroyBuffer(m_vma, out_stage_buffer, out_stage_allocation);
+    } catch (MVRender::Exception& r) {
+        vmaDestroyBuffer(m_vma, out_stage_buffer, out_stage_allocation);
+        vmaDestroyBuffer(m_vma, out_device_buffer, out_device_allocation);
+        throw;
+    }
+
+    BufferDescriptor *d = get_buffer_descriptor();
+    d->size = 0;
+    d->offset = 0;
+    d->buffer = out_device_buffer;
+    d->data = nullptr;
+    d->allocation = out_device_allocation;
+    return d;
 }
 
 void MVRender::Renderer::free_permanent_buffer(BufferDescriptor *buffer) {
-    // TODO: This
+    vmaDestroyBuffer(m_vma, buffer->buffer, buffer->allocation);
+    remove_buffer_descriptor(buffer);
 }

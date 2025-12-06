@@ -41,6 +41,14 @@ int main() {
         return 1;
     }
 
+    // Test permanent buffer
+    uint8_t garbage[100];
+    MVR_Buffer permanent;
+    if (mvr_CreateBuffer(100, garbage, &permanent) != MVR_RESULT_SUCCESS) {
+        spdlog::error("Failed to create permanent buffer, {}", mvr_GetError());
+        return 1;
+    }
+
     // Main event loop
     SDL_Event e;
     bool keep_window_open = true;
@@ -53,7 +61,6 @@ int main() {
         }
 
         // Test creating buffers
-        uint8_t garbage[100] = {0};
         MVR_Buffer buffer;
         if (mvr_CreateTempBuffer(100, &garbage, &buffer) != MVR_RESULT_SUCCESS) {
             spdlog::error("Failed to create buffer, {}", mvr_GetError());
@@ -63,6 +70,7 @@ int main() {
         mvr_PresentFrame();
     }
 
+    mvr_DestroyBuffer(permanent);
     mvr_Quit();
     SDL_DestroyWindow(window);
     SDL_Quit();

@@ -13,9 +13,10 @@ namespace MVRender {
         VkPhysicalDeviceProperties device_properties;
     };
 
-    // MVR_Buffer is a pointer to one of these structs
+    // MVR_Buffer is a pointer to one of these structs. Permanent buffers do not care about anything except buffer.
     struct BufferDescriptor {
         VkBuffer buffer; // the device-local buffer
+        VmaAllocation allocation; // allocation for permanent buffers -- NOT FOR TEMPORARY
         VkDeviceSize offset; // offset in that buffer for this virtual buffer
         VkDeviceSize size; // amount of bytes pertaining to this buffer
         void *data; // memory-mapped host-visible pointer to the start of the range
