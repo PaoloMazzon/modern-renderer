@@ -39,7 +39,7 @@ void MVRender::BufferAllocator::append_page(VkDeviceSize size) {
     renderer.debug_name_object(
             reinterpret_cast<uint64_t>(out_stage_buffer),
             VK_OBJECT_TYPE_BUFFER,
-            fmt::format("FIF [{}] Page [{}] staging buffer", m_index, page_index)
+            fmt::format("Buffer FIF[{}].page[{}] (staging)", m_index, page_index)
     );
 
     // Create the device buffer
@@ -72,7 +72,7 @@ void MVRender::BufferAllocator::append_page(VkDeviceSize size) {
     renderer.debug_name_object(
             reinterpret_cast<uint64_t>(out_device_buffer),
             VK_OBJECT_TYPE_BUFFER,
-            fmt::format("FIF [{}] Page [{}] device buffer", m_index, page_index)
+            fmt::format("Buffer FIF[{}].page[{}] (device)", m_index, page_index)
     );
 
     // Now that we have the memory, we need to map it

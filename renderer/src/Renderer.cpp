@@ -310,17 +310,22 @@ void MVRender::Renderer::initialize_swapchain() {
         debug_name_object(
                 reinterpret_cast<uint64_t>(semaphore),
                 VK_OBJECT_TYPE_SEMAPHORE,
-                fmt::format("SC image [{}] image ready semaphore", sc_image_index)
+                fmt::format("Semaphore for swapchain image[{}] (image ready)", sc_image_index)
         );
         debug_name_object(
                 reinterpret_cast<uint64_t>(semaphore2),
                 VK_OBJECT_TYPE_SEMAPHORE,
-                fmt::format("SC image [{}] submit read semaphore", sc_image_index)
+                fmt::format("Semaphore for swapchain image[{}] (submit read)", sc_image_index)
         );
         debug_name_object(
                 reinterpret_cast<uint64_t>(image_view),
                 VK_OBJECT_TYPE_IMAGE_VIEW,
-                fmt::format("SC image [{}] image view", sc_image_index)
+                fmt::format("Swapchain image view[{}]", sc_image_index)
+        );
+        debug_name_object(
+                reinterpret_cast<uint64_t>(image_view),
+                VK_OBJECT_TYPE_IMAGE_VIEW,
+                fmt::format("Swapchain image[{}]", sc_image_index)
         );
         sc_image_index++;
     }
@@ -357,7 +362,7 @@ void MVRender::Renderer::initialize_sync() {
     debug_name_object(
             reinterpret_cast<uint64_t>(m_timeline_semaphore),
             VK_OBJECT_TYPE_SEMAPHORE,
-            fmt::format("Timeline semaphore")
+            fmt::format("Semaphore - timeline")
     );
     spdlog::info("Create timeline semaphore.");
 }
@@ -415,17 +420,17 @@ void MVRender::Renderer::initialize_frame_resources() {
         debug_name_object(
                 reinterpret_cast<uint64_t>(command_buffers[0]),
                 VK_OBJECT_TYPE_COMMAND_BUFFER,
-                fmt::format("FIF [{}] copy command buffer", i)
+                fmt::format("Command buffer FIF[{}] copy", i)
         );
         debug_name_object(
                 reinterpret_cast<uint64_t>(command_buffers[1]),
                 VK_OBJECT_TYPE_COMMAND_BUFFER,
-                fmt::format("FIF [{}] compute command buffer", i)
+                fmt::format("Command buffer FIF[{}] compute", i)
         );
         debug_name_object(
                 reinterpret_cast<uint64_t>(command_buffers[2]),
                 VK_OBJECT_TYPE_COMMAND_BUFFER,
-                fmt::format("FIF [{}] drawing command buffer", i)
+                fmt::format("Command buffer FIF[{}] drawing", i)
         );
     }
     spdlog::info("Created per-frame resources.");
