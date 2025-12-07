@@ -23,6 +23,7 @@ add_subdirectory(3rd/VulkanMemoryAllocator)
 add_subdirectory(3rd/fmt)
 add_subdirectory(3rd/spdlog)
 add_subdirectory(3rd/SPIRV-Reflect)
+add_subdirectory(3rd/volk)
 
 if (MSVC)
     add_compile_options(/W4 /permissive-)
@@ -45,15 +46,14 @@ add_library(${PROJECT_NAME} ${CXX_FILES} ${EXTERNAL_CXX_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC renderer/include/)
 
 # Add dependencies
-find_package(Vulkan REQUIRED)
 target_link_libraries(${PROJECT_NAME}
         PUBLIC
-        Vulkan::Vulkan
         vk-bootstrap::vk-bootstrap
         GPUOpen::VulkanMemoryAllocator
         fmt::fmt
         spdlog::spdlog
         SDL3::SDL3
+        volk
 )
 
 # Build app and tests

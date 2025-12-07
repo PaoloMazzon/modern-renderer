@@ -1,5 +1,6 @@
 // This is the core renderer infrastructure, for utilities inside the renderer see RendererUtil.cpp
-#include <vulkan/vulkan.h>
+#define VK_NO_PROTOTYPES
+#include <volk.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <VkBootstrap.h>
 #include <SDL3/SDL_vulkan.h>
@@ -43,6 +44,7 @@ void MVRender::Renderer::quit_vulkan() {
 void MVRender::Renderer::initialize_instance() {
     // Get SDL requested layers
     uint32_t count;
+    volkInitialize();
     const char * const *extensions = SDL_Vulkan_GetInstanceExtensions(&count);
 
     // Create instance
@@ -75,6 +77,7 @@ void MVRender::Renderer::initialize_instance() {
     }
     m_vkb_instance = inst_ret.value();
     m_vk_instance = inst_ret.value().instance;
+    volkLoadInstance(m_vk_instance);
 
     spdlog::info("Created Vulkan instance.");
 
@@ -134,6 +137,7 @@ void MVRender::Renderer::initialize_instance() {
     }
     m_vkb_logical_device = dev_ret.value();
     m_vk_logical_device = m_vkb_logical_device.device;
+    volkLoadDevice(m_vk_logical_device);
 
     spdlog::info("Created logical device.");
 
@@ -152,6 +156,7 @@ void MVRender::Renderer::quit_instance() {
     vkb::destroy_device(m_vkb_logical_device);
     vkDestroySurfaceKHR(m_vk_instance, m_vk_surface, nullptr);
     vkb::destroy_instance(m_vkb_instance);
+    volkFinalize();
 
     spdlog::info("Freed logical device, surface, and instance.");
 }
@@ -450,6 +455,9 @@ void MVRender::Renderer::initialize_vma() {
         .instance = m_vk_instance,
         .vulkanApiVersion = VK_MAKE_VERSION(1, 3, 0),
     };
+    VmaVulkanFunctions vulkan_functions;
+    vmaImportVulkanFunctionsFromVolk(&allocator_create_info, &vulkan_functions);
+    allocator_create_info.pVulkanFunctions = &vulkan_functions;
     VkResult allocator_result = vmaCreateAllocator(&allocator_create_info, &m_vma);
 
     if (allocator_result != VK_SUCCESS) {

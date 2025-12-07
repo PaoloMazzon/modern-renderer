@@ -1,7 +1,8 @@
 /// \brief Singleton renderer that contains all necessary state
 #pragma once
+#define VK_NO_PROTOTYPES
+#include <volk.h>
 #include <VkBootstrap.h>
-#include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 #include <cinttypes>
 #include "render/BufferAllocator.hpp"
