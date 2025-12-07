@@ -10,6 +10,8 @@
 
 void MVRender::BufferAllocator::append_page(VkDeviceSize size) {
     auto &renderer = MVRender::Renderer::instance();
+    const uint32_t page_index = m_buffer_pages.size();
+
     // Create the staging buffer
     VkBuffer out_stage_buffer;
     VmaAllocation out_stage_allocation;
@@ -33,6 +35,12 @@ void MVRender::BufferAllocator::append_page(VkDeviceSize size) {
         const char *string_result = string_VkResult(stage_buffer_result);
         throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to allocate staging buffer for new page, {}", string_result));
     }
+
+    renderer.debug_name_object(
+            reinterpret_cast<uint64_t>(out_stage_buffer),
+            VK_OBJECT_TYPE_BUFFER,
+            fmt::format("FIF [{}] Page [{}] staging buffer", m_index, page_index)
+    );
 
     // Create the device buffer
     VkBuffer out_device_buffer;
@@ -60,6 +68,12 @@ void MVRender::BufferAllocator::append_page(VkDeviceSize size) {
         const char *string_result = string_VkResult(device_buffer_result);
         throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to allocate device buffer for new page, {}", string_result));
     }
+
+    renderer.debug_name_object(
+            reinterpret_cast<uint64_t>(out_device_buffer),
+            VK_OBJECT_TYPE_BUFFER,
+            fmt::format("FIF [{}] Page [{}] device buffer", m_index, page_index)
+    );
 
     // Now that we have the memory, we need to map it
     void *data;
@@ -135,6 +149,7 @@ MVRender::BufferAllocator::BufferAllocator(MVRender::BufferAllocatorCreateInfo &
     m_vma = create_info.allocator;
     m_logical_device = create_info.logical_device;
     m_queue_family_index = create_info.queue_family_index;
+    m_index = create_info.frame_in_flight_index;
 
     // We need to find the minimum alignment we care about (minimum being the highest value
     // of all the alignments of the types of data this thing supports)

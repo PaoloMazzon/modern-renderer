@@ -13,6 +13,7 @@
 void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     m_initialize_params = params;
     initialize_instance();
+    initialize_function_pointers();
     build_surface_format();
     initialize_swapchain();
     initialize_sync();
@@ -52,6 +53,21 @@ void MVRender::Renderer::initialize_instance() {
             .request_validation_layers(m_initialize_params.debug);
     for (uint32_t i = 0; i < count; i++)
         builder.enable_extension(extensions[i]);
+
+    // Enable debug naming if available and debug is enabled
+    if (m_initialize_params.debug) {
+        for (auto &e: vkb::SystemInfo::get_system_info().value().available_extensions) {
+            if (strcmp(e.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0) {
+                m_debug_names_enabled = true;
+                break;
+            }
+        }
+        if (m_debug_names_enabled) {
+            builder.enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+        }
+        spdlog::info("Debug names extension {}found.", m_debug_names_enabled ? "" : "not ");
+    }
+
     auto inst_ret = builder.build();
     if (!inst_ret) {
         const char *string_result = string_VkResult(inst_ret.vk_result());
@@ -140,6 +156,13 @@ void MVRender::Renderer::quit_instance() {
     spdlog::info("Freed logical device, surface, and instance.");
 }
 
+void MVRender::Renderer::initialize_function_pointers() {
+    if (m_debug_names_enabled) {
+        m_fp.fn_vkSetDebugUtilsObjectNameEXT = reinterpret_cast<PFN_vkSetDebugUtilsObjectNameEXT>(
+                vkGetInstanceProcAddr(m_vk_instance, "vkSetDebugUtilsObjectNameEXT"));
+    }
+}
+
 void MVRender::Renderer::build_surface_format() {
     // Get the surface formats
     uint32_t format_count;
@@ -222,6 +245,7 @@ void MVRender::Renderer::initialize_swapchain() {
     vkGetSwapchainImagesKHR(m_vk_logical_device, m_vk_swapchain, &m_swapchain_image_count, swapchain_images.data());
 
     // Create per-swapchain resources
+    int sc_image_index = 0;
     for (auto image: swapchain_images) {
         // Create image view
         VkImageViewCreateInfo image_view_create_info = {
@@ -282,6 +306,23 @@ void MVRender::Renderer::initialize_swapchain() {
                 .submit_ready_semaphore = semaphore2,
         };
         m_swapchain_res.push_back(swapchain_resources);
+
+        debug_name_object(
+                reinterpret_cast<uint64_t>(semaphore),
+                VK_OBJECT_TYPE_SEMAPHORE,
+                fmt::format("SC image [{}] image ready semaphore", sc_image_index)
+        );
+        debug_name_object(
+                reinterpret_cast<uint64_t>(semaphore2),
+                VK_OBJECT_TYPE_SEMAPHORE,
+                fmt::format("SC image [{}] submit read semaphore", sc_image_index)
+        );
+        debug_name_object(
+                reinterpret_cast<uint64_t>(image_view),
+                VK_OBJECT_TYPE_IMAGE_VIEW,
+                fmt::format("SC image [{}] image view", sc_image_index)
+        );
+        sc_image_index++;
     }
 
     spdlog::info("Successfully created swapchain.");
@@ -313,6 +354,11 @@ void MVRender::Renderer::initialize_sync() {
         const char *string_result = string_VkResult(result);
         throw Exception(MVR_RESULT_CRITICAL_VULKAN_ERROR, fmt::format("Failed to create timeline semaphore, Vulkan error {}", string_result));
     }
+    debug_name_object(
+            reinterpret_cast<uint64_t>(m_timeline_semaphore),
+            VK_OBJECT_TYPE_SEMAPHORE,
+            fmt::format("Timeline semaphore")
+    );
     spdlog::info("Create timeline semaphore.");
 }
 
@@ -354,6 +400,7 @@ void MVRender::Renderer::initialize_frame_resources() {
                 .page_size = VRAM_PAGE_SIZE,
                 .queue_family_index = m_queue_family_index,
                 .device_properties = m_vk_physical_device_properties,
+                .frame_in_flight_index = static_cast<uint32_t>(i),
         };
 
         FrameResources res = {
@@ -364,6 +411,22 @@ void MVRender::Renderer::initialize_frame_resources() {
         };
 
         m_frame_res.push_back(res);
+
+        debug_name_object(
+                reinterpret_cast<uint64_t>(command_buffers[0]),
+                VK_OBJECT_TYPE_COMMAND_BUFFER,
+                fmt::format("FIF [{}] copy command buffer", i)
+        );
+        debug_name_object(
+                reinterpret_cast<uint64_t>(command_buffers[1]),
+                VK_OBJECT_TYPE_COMMAND_BUFFER,
+                fmt::format("FIF [{}] compute command buffer", i)
+        );
+        debug_name_object(
+                reinterpret_cast<uint64_t>(command_buffers[2]),
+                VK_OBJECT_TYPE_COMMAND_BUFFER,
+                fmt::format("FIF [{}] drawing command buffer", i)
+        );
     }
     spdlog::info("Created per-frame resources.");
 }

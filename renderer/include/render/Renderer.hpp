@@ -6,6 +6,7 @@
 #include <cinttypes>
 #include "render/BufferAllocator.hpp"
 #include "render/Structs.h"
+#include "render/VulkanFunctionPointers.hpp"
 
 namespace MVRender {
     // Resources that are per swapchain image
@@ -44,7 +45,10 @@ namespace MVRender {
     private:
         Renderer() = default;
 
-        MVR_InitializeParams m_initialize_params{};
+        // Top-level things
+        MVR_InitializeParams m_initialize_params;
+        bool m_debug_names_enabled;
+        VulkanFunctionPointers m_fp;
 
         // Internal vulkan state
         VkInstance m_vk_instance;
@@ -92,6 +96,8 @@ namespace MVRender {
         void initialize_vma();
         void quit_vma();
 
+        void initialize_function_pointers();
+
         // Returns an empty buffer descriptor stored permanently in the renderer
         BufferDescriptor *get_buffer_descriptor();
 
@@ -134,5 +140,9 @@ namespace MVRender {
         // Create and free permanent buffers
         BufferDescriptor *load_permanent_buffer(uint64_t size, void *data);
         void free_permanent_buffer(BufferDescriptor *buffer);
+
+        // Give resources names, this does nothing if debug is disabled or the extension is not
+        // present on the host machine.
+        void debug_name_object(uint64_t object, VkObjectType type, const std::string& name);
     };
 }

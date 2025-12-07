@@ -11,6 +11,7 @@ namespace MVRender {
         VkDeviceSize page_size;
         uint32_t queue_family_index;
         VkPhysicalDeviceProperties device_properties;
+        uint32_t frame_in_flight_index;
     };
 
     // MVR_Buffer is a pointer to one of these structs. Permanent buffers do not care about anything except buffer.
@@ -50,6 +51,7 @@ namespace MVRender {
         VmaAllocator m_vma;
         VkDevice m_logical_device;
         uint32_t m_queue_family_index;
+        uint32_t m_index; // frame in flight index for debug purposes
 
         // Minimum required alignment for memory to be placed in pages
         VkDeviceSize m_minimum_alignment = 0;

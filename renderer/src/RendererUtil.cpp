@@ -85,6 +85,9 @@ void MVRender::Renderer::submit_single_use_command_buffer(VkCommandBuffer buffer
 
 // TODO: Use something more RAII, or otherwise fix this mess.
 MVRender::BufferDescriptor *MVRender::Renderer::load_permanent_buffer(uint64_t size, void *data) {
+    static uint32_t index = 0;
+    index += 1;
+
     // Create the staging buffer
     VkBuffer out_stage_buffer;
     VmaAllocation out_stage_allocation;
@@ -136,6 +139,12 @@ MVRender::BufferDescriptor *MVRender::Renderer::load_permanent_buffer(uint64_t s
         throw Exception(MVR_RESULT_VULKAN_ERROR, fmt::format("Failed to allocate device buffer for new page, {}", string_result));
     }
 
+    debug_name_object(
+            reinterpret_cast<uint64_t>(out_device_buffer),
+            VK_OBJECT_TYPE_BUFFER,
+            fmt::format("Permanent buffer {}", index)
+    );
+
     // Now that we have the memory, we need to map it
     void *mapped_memory;
     VkResult memory_map_result = vmaMapMemory(m_vma, out_stage_allocation, &mapped_memory);
@@ -185,4 +194,15 @@ MVRender::BufferDescriptor *MVRender::Renderer::load_permanent_buffer(uint64_t s
 void MVRender::Renderer::free_permanent_buffer(BufferDescriptor *buffer) {
     vmaDestroyBuffer(m_vma, buffer->buffer, buffer->allocation);
     remove_buffer_descriptor(buffer);
+}
+
+void MVRender::Renderer::debug_name_object(uint64_t object, VkObjectType type, const std::string& name) {
+    if (!m_debug_names_enabled) return;
+    VkDebugUtilsObjectNameInfoEXT name_info = {
+            .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT,
+            .objectType = type,
+            .objectHandle = object,
+            .pObjectName = name.c_str(),
+    };
+    m_fp.fn_vkSetDebugUtilsObjectNameEXT(m_vk_logical_device, &name_info);
 }
