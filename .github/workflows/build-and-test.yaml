@@ -41,6 +41,8 @@ jobs:
         run: |
           echo "-------BEFORE LS-------"
           find . -maxdepth 3 -mindepth 3
+          find . -name "*.gcda"
           echo "-------AFTER LS-------"
+          /build/tests/modern_renderer_tests
           gcov -j coverage.gcda
           gunzip coverage.gcov.json.gz
