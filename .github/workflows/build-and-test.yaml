@@ -46,4 +46,4 @@ jobs:
           find . -name "*.gcda"
           echo "-------AFTER LS-------"
           gcovr -r . --object-directory build --json coverage.json --exclude "tests/*"
-          cat coverage.json
+          ls
