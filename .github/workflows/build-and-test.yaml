@@ -45,5 +45,6 @@ jobs:
           find . -name "*.gcno"
           find . -name "*.gcda"
           echo "-------AFTER LS-------"
-          gcovr -r . --object-directory build --json coverage.json --exclude "tests/*"
+          ./build/tests/modern_renderer_tests
+          gcovr -r . --object-directory build --json coverage.json
           ls
