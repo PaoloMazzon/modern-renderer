@@ -45,5 +45,5 @@ jobs:
           find . -name "*.gcda"
           echo "-------AFTER LS-------"
           ./build/tests/modern_renderer_tests
-          gcov -j coverage.gcda
-          gunzip coverage.gcov.json.gz
+          cd build/CMakeFiles/modern_renderer.dir/renderer/src/
+          gcov -j *.cpp
