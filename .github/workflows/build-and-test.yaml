@@ -40,7 +40,7 @@ jobs:
 
       - name: Get coverage data
         run: |
-          cd build/tests
+          cd build
           echo "-------BEFORE LS-------"
           find . -maxdepth 2 -mindepth 2
           echo "-------AFTER LS-------"
