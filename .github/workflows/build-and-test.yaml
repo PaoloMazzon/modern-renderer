@@ -41,5 +41,5 @@ jobs:
       - name: Get coverage data
         run: |
           gcovr -r . --object-directory build --json coverage.json --exclude 3rd/
-          ll coverage.json
+          ls -l coverage.json
           gcovr -r . --object-directory build --json coverage.json
