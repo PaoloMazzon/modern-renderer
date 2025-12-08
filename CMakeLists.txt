@@ -60,9 +60,9 @@ target_link_libraries(${PROJECT_NAME}
         volk
 )
 
-if (BUILD_WITH_COVERAGE)
+if (BUILD_WITH_COVERAGE AND NOT MSVC)
     target_link_libraries(${PROJECT_NAME}
-            PRIVATE
+            PUBLIC
             --coverage
     )
 endif()
