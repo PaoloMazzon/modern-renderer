@@ -29,7 +29,6 @@ jobs:
 
       - name: Build
         run: |
-          vulkaninfo --summary
           cmake --build build --config Release
 
       - name: Run tests
@@ -40,9 +39,8 @@ jobs:
 
       - name: Get coverage data
         run: |
-          cd build
           echo "-------BEFORE LS-------"
-          find . -maxdepth 2 -mindepth 2
+          find . -maxdepth 3 -mindepth 3
           echo "-------AFTER LS-------"
           gcov -j coverage.gcda
           gunzip coverage.gcov.json.gz

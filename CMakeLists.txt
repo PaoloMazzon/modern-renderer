@@ -32,6 +32,7 @@ else()
     add_compile_options(-Wall -Wextra -pedantic)
     if (BUILD_WITH_COVERAGE)
         add_compile_options(--coverage)
+        message("Added coverage compile option.")
     endif()
 endif()
 
@@ -65,6 +66,7 @@ if (BUILD_WITH_COVERAGE AND NOT MSVC)
             PUBLIC
             --coverage
     )
+    message("Linked coverage.")
 endif()
 
 # Build app and tests
