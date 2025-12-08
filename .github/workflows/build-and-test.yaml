@@ -42,4 +42,4 @@ jobs:
         run: |
           gcovr -r . --object-directory build --json coverage.json --exclude 3rd/
           ls -l coverage.json
-          gcovr -r . --object-directory build --json coverage.json
+          gcovr -r . --object-directory build --exclude 3rd/
