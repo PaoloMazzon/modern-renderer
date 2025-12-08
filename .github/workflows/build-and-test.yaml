@@ -40,6 +40,7 @@ jobs:
 
       - name: Get coverage data
         run: |
+          cd build/tests
           ls
           gcov -j coverage.gcda
           gunzip coverage.gcov.json.gz
