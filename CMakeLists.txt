@@ -60,6 +60,13 @@ target_link_libraries(${PROJECT_NAME}
         volk
 )
 
+if (BUILD_WITH_COVERAGE)
+    target_link_libraries(${PROJECT_NAME}
+            PRIVATE
+            --coverage
+    )
+endif()
+
 # Build app and tests
 if (BUILD_SAMPLE_APP)
     add_subdirectory(test-app)
