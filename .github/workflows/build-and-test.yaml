@@ -42,4 +42,9 @@ jobs:
         run: |
           gcovr -r . --object-directory build --json coverage.json --exclude 3rd/
           ls -l coverage.json
-          gcovr -r . --object-directory build --exclude 3rd/
+          $total=$(gcovr -r . --object-directory build --exclude 3rd/ | grep TOTAL | awk '{print $4}')
+          echo "TOTAL_COVERAGE=$total" >> $GITHUB_ENV
+      
+      - name: Send coverage data
+        run: |
+          echo "Coverage amount: $TOTAL_COVERAGE"
