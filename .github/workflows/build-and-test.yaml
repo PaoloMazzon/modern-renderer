@@ -25,12 +25,19 @@ jobs:
           sudo apt-get install -y cmake ninja-build build-essential gcc libvulkan-dev libvulkan1 vulkan-tools vulkan-utility-libraries-dev
 
       - name: Configure CMake
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_UNIX_CONSOLE_BUILD=ON -DBUILD_SAMPLE_APP=ON -DBUILD_TESTS=ON
+        run: cmake -S . -B build -G Ninja -DSDL_UNIX_CONSOLE_BUILD=ON -DBUILD_SAMPLE_APP=ON -DBUILD_TESTS=ON -DBUILD_WITH_COVERAGE=ON
 
       - name: Build
-        run: cmake --build build --config Release
+        run: |
+          vulkaninfo --summary
+          cmake --build build --config Release
 
       - name: Run tests
         run: |
           export LD_LIBRARY_PATH=${{ github.workspace }}/build/SDL3:$LD_LIBRARY_PATH
           ctest --test-dir build/tests --output-on-failure
+
+      - name: Get coverage data
+        run: |
+          gcov -j coverage.gcda
+          gunzip coverage.gcov.json.gz

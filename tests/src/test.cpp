@@ -2,6 +2,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <render/Core.h>
 #include <render/Logging.hpp>
+#include <render/Renderer.hpp>
 
 TEST_CASE("User-facing error messages") {
     MVRender::set_error_message("123abc");
@@ -19,4 +20,14 @@ TEST_CASE("User-facing error messages") {
         REQUIRE(e.result() == MVR_RESULT_CRITICAL_VULKAN_ERROR);
         REQUIRE(strcmp(mvr_GetError(), "garbage, Vulkan error VK_ERROR_DEVICE_LOST") == 0);
     }
+}
+
+TEST_CASE("Renderer integration test") {
+    auto& renderer = MVRender::Renderer::instance();
+    SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
+
+    renderer.initialize_vulkan_headless();
+    renderer.quit_vulkan_headless();
+
+    SDL_Quit();
 }

@@ -3,6 +3,7 @@ project(modern_renderer)
 
 option(BUILD_SAMPLE_APP "Build test app for the renderer" OFF)
 option(BUILD_TESTS "Build the test suite for the renderer" OFF)
+option(BUILD_WITH_COVERAGE "Build with --coverage (Unix only)" OFF)
 
 # Let subprojects see 3rd/ modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/3rd")
@@ -29,6 +30,9 @@ if (MSVC)
     add_compile_options(/W4 /permissive-)
 else()
     add_compile_options(-Wall -Wextra -pedantic)
+    if (BUILD_WITH_COVERAGE)
+        add_compile_options(--coverage)
+    endif()
 endif()
 
 set(EXTERNAL_CXX_FILES ${CMAKE_SOURCE_DIR}/3rd/SPIRV-Reflect/spirv_reflect.cpp)

@@ -121,12 +121,16 @@ namespace MVRender {
         // Top-level destruction method
         void quit_vulkan();
 
+        // This is the same as above but for debug purposes, so uses sensible defaults
+        void initialize_vulkan_headless();
+        void quit_vulkan_headless();
+
         // Util
         [[nodiscard]] VkPresentModeKHR get_present_mode(MVR_PresentMode present_mode) const; // accounts for available present modes
         BufferAllocator &get_buffer_allocator(); // for current frame
 
         // Internal
-        void initialize_instance(); // also creates the device and surface
+        void initialize_instance(bool headless = false); // also creates the device and surface
         void quit_instance();
 
         void begin_frame();
