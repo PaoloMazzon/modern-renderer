@@ -22,7 +22,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build build-essential gcc libvulkan-dev libvulkan1 vulkan-tools vulkan-utility-libraries-dev mesa-vulkan-drivers
+          sudo apt-get install -y cmake ninja-build build-essential gcc libvulkan-dev libvulkan1 vulkan-tools vulkan-utility-libraries-dev mesa-vulkan-drivers python3-pip
+          pip3 install gcovr
 
       - name: Configure CMake
         run: cmake -S . -B build -G Ninja -DSDL_UNIX_CONSOLE_BUILD=ON -DBUILD_SAMPLE_APP=ON -DBUILD_TESTS=ON -DBUILD_WITH_COVERAGE=ON
@@ -44,6 +45,5 @@ jobs:
           find . -name "*.gcno"
           find . -name "*.gcda"
           echo "-------AFTER LS-------"
-          ./build/tests/modern_renderer_tests
-          cd build/CMakeFiles/modern_renderer.dir/renderer/src/
-          gcov -j *.cpp
+          gcovr -r . --object-directory build --json coverage.json --exclude "tests/*"
+          cat coverage.json
