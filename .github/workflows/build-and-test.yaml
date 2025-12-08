@@ -41,6 +41,8 @@ jobs:
       - name: Get coverage data
         run: |
           cd build/tests
-          ls
+          echo "-------BEFORE LS-------"
+          find . -maxdepth 2 -mindepth 2
+          echo "-------AFTER LS-------"
           gcov -j coverage.gcda
           gunzip coverage.gcov.json.gz
