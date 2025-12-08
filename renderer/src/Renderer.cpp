@@ -72,7 +72,10 @@ void MVRender::Renderer::initialize_instance(bool headless) {
     // Get SDL requested layers
     uint32_t count;
     volkInitialize();
-    const char * const *extensions = SDL_Vulkan_GetInstanceExtensions(&count);
+    const char * const *extensions = nullptr;
+    if (!headless) {
+        extensions = SDL_Vulkan_GetInstanceExtensions(&count);
+    }
 
     // Create instance
     vkb::InstanceBuilder builder;

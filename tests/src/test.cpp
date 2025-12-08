@@ -24,10 +24,6 @@ TEST_CASE("User-facing error messages") {
 
 TEST_CASE("Renderer integration test") {
     auto& renderer = MVRender::Renderer::instance();
-    SDL_Init(SDL_INIT_EVENTS | SDL_INIT_VIDEO);
-
     renderer.initialize_vulkan_headless();
     renderer.quit_vulkan_headless();
-
-    SDL_Quit();
 }
