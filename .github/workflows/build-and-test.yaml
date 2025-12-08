@@ -40,11 +40,6 @@ jobs:
 
       - name: Get coverage data
         run: |
-          echo "-------BEFORE LS-------"
-          find . -maxdepth 3 -mindepth 3
-          find . -name "*.gcno"
-          find . -name "*.gcda"
-          echo "-------AFTER LS-------"
-          ./build/tests/modern_renderer_tests
+          gcovr -r . --object-directory build --json coverage.json --exclude 3rd/
+          ll coverage.json
           gcovr -r . --object-directory build --json coverage.json
-          ls
