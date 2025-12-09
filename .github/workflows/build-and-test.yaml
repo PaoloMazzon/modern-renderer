@@ -39,8 +39,8 @@ jobs:
 
       - name: Get coverage data
         run: |
-          gcovr -r . --object-directory build --exclude 3rd/
-          total=$(gcovr -r . --object-directory build --exclude 3rd/ | grep TOTAL | awk '{print $4}')
+          gcovr -r . --object-directory build --exclude 3rd/ --exclude test-app/
+          total=$(gcovr -r . --object-directory build --exclude 3rd/ --exclude test-app/ | grep TOTAL | awk '{print $4}')
           echo "TOTAL_COVERAGE=$total" >> $GITHUB_ENV
 
       - name: Create Awesome Badge
