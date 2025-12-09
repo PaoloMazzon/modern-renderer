@@ -59,6 +59,11 @@ void MVRender::Renderer::quit_vulkan_headless() {
     spdlog::info("Waiting for GPU to idle.");
     vkDeviceWaitIdle(m_vk_logical_device);
 
+    // Manually unmap page buffers
+    for (auto& page: m_frame_res) {
+        page.buffer_allocator.record_copy_commands(VK_NULL_HANDLE);
+    }
+
     // Destroy subsystems
     quit_frame_resources();
     quit_vma();

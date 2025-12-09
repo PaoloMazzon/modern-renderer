@@ -196,7 +196,7 @@ void MVRender::BufferAllocator::record_copy_commands(VkCommandBuffer command_buf
                 .pRegions = &buffer_region
         };
 
-        if (page.offset > 0) {
+        if (page.offset > 0 && command_buffer != VK_NULL_HANDLE) {
             vkCmdCopyBuffer2(command_buffer, &copy_buffer);
         }
     }
