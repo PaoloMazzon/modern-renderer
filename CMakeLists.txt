@@ -3,6 +3,7 @@ project(modern_renderer)
 
 option(BUILD_SAMPLE_APP "Build test app for the renderer" OFF)
 option(BUILD_TESTS "Build the test suite for the renderer" OFF)
+option(BUILD_WITH_COVERAGE "Build with --coverage (Unix only)" OFF)
 
 # Let subprojects see 3rd/ modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/3rd")
@@ -23,11 +24,16 @@ add_subdirectory(3rd/VulkanMemoryAllocator)
 add_subdirectory(3rd/fmt)
 add_subdirectory(3rd/spdlog)
 add_subdirectory(3rd/SPIRV-Reflect)
+add_subdirectory(3rd/volk)
 
 if (MSVC)
     add_compile_options(/W4 /permissive-)
 else()
     add_compile_options(-Wall -Wextra -pedantic)
+    if (BUILD_WITH_COVERAGE)
+        add_compile_options(--coverage)
+        message("Added coverage compile option.")
+    endif()
 endif()
 
 set(EXTERNAL_CXX_FILES ${CMAKE_SOURCE_DIR}/3rd/SPIRV-Reflect/spirv_reflect.cpp)
@@ -45,16 +51,23 @@ add_library(${PROJECT_NAME} ${CXX_FILES} ${EXTERNAL_CXX_FILES})
 target_include_directories(${PROJECT_NAME} PUBLIC renderer/include/)
 
 # Add dependencies
-find_package(Vulkan REQUIRED)
 target_link_libraries(${PROJECT_NAME}
         PUBLIC
-        Vulkan::Vulkan
         vk-bootstrap::vk-bootstrap
         GPUOpen::VulkanMemoryAllocator
         fmt::fmt
         spdlog::spdlog
         SDL3::SDL3
+        volk
 )
+
+if (BUILD_WITH_COVERAGE AND NOT MSVC)
+    target_link_libraries(${PROJECT_NAME}
+            PUBLIC
+            --coverage
+    )
+    message("Linked coverage.")
+endif()
 
 # Build app and tests
 if (BUILD_SAMPLE_APP)

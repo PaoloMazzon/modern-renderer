@@ -1,6 +1,9 @@
 // Renderer utilities, the core infrastructure is in Renderer.cpp
+#define VK_NO_PROTOTYPES
+#include <volk.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <fmt/core.h>
+
 #include "render/Renderer.hpp"
 #include "render/BufferAllocator.hpp"
 #include "render/Constants.hpp"

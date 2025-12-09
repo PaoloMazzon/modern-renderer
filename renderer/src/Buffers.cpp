@@ -1,6 +1,9 @@
-#include <vk_mem_alloc.h>
+#define VK_NO_PROTOTYPES
+#include <volk.h>
 #include <vulkan/vk_enum_string_helper.h>
+#include <vk_mem_alloc.h>
 #include <fmt/core.h>
+
 #include "render/Renderer.hpp"
 #include "render/BufferAllocator.hpp"
 #include "render/Buffers.h"
@@ -193,7 +196,7 @@ void MVRender::BufferAllocator::record_copy_commands(VkCommandBuffer command_buf
                 .pRegions = &buffer_region
         };
 
-        if (page.offset > 0) {
+        if (page.offset > 0 && command_buffer != VK_NULL_HANDLE) {
             vkCmdCopyBuffer2(command_buffer, &copy_buffer);
         }
     }

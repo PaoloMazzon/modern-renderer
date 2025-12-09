@@ -1,6 +1,6 @@
 /// \brief C++ declaration of the temporary buffer abstraction's class
 #pragma once
-#include <vulkan/vulkan.h>
+#include <volk.h>
 #include <vector>
 #include "render/Structs.h"
 

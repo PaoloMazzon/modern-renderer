@@ -1,6 +1,7 @@
 /// \brief Internal logging methods
 #pragma once
 #include <iostream>
+#define VK_NO_PROTOTYPES
 #include <vulkan/vulkan_core.h>
 #include "render/Core.h"
 

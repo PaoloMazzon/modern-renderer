@@ -19,3 +19,7 @@
 [submodule "3rd/fmt"]
 	path = 3rd/fmt
 	url = https://github.com/fmtlib/fmt
+[submodule "3rd/volk"]
+	path = 3rd/volk
+	url = https://github.com/zeux/volk
+

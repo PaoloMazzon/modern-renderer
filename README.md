@@ -3,6 +3,7 @@ This project aims to be an attempt at a modern renderer written in C++ with a C 
 utilizing Vulkan for the bulk of the rendering work.
 
 [![CMake Build & Test](https://github.com/PaoloMazzon/modern-renderer/actions/workflows/build-and-test.yaml/badge.svg?branch=main)](https://github.com/PaoloMazzon/modern-renderer/actions/workflows/build-and-test.yaml)
+![coverage](https://gist.githubusercontent.com/PaoloMazzon/227fdd0e548061bf552b6fe1e51b14d4/raw/test.svg)
 
 ## Project Overview
 As it stands, all tests are in `tests/`, the main application used for testing the renderer

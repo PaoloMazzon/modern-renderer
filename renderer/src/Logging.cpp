@@ -1,6 +1,9 @@
-#include <string>
+#define VK_NO_PROTOTYPES
+#include <volk.h>
 #include <vulkan/vk_enum_string_helper.h>
+#include <string>
 #include <fmt/format.h>
+
 #include "render/Logging.hpp"
 #include "render/Core.h"
 

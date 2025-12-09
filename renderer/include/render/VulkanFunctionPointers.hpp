@@ -1,6 +1,6 @@
 /// \brief
 #pragma once
-#include <vulkan/vulkan.h>
+#include <volk.h>
 
 // These are function pointers for extensions we are using
 struct VulkanFunctionPointers {

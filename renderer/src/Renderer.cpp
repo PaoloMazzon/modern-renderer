@@ -1,5 +1,6 @@
 // This is the core renderer infrastructure, for utilities inside the renderer see RendererUtil.cpp
-#include <vulkan/vulkan.h>
+#define VK_NO_PROTOTYPES
+#include <volk.h>
 #include <vulkan/vk_enum_string_helper.h>
 #include <VkBootstrap.h>
 #include <SDL3/SDL_vulkan.h>
@@ -38,12 +39,48 @@ void MVRender::Renderer::quit_vulkan() {
     spdlog::info("Freed Vulkan resources.");
 }
 
+void MVRender::Renderer::initialize_vulkan_headless() {
+    // this is mostly the same as above but no window, so no surface and no swapchain
+    // therefore we can't test sync
+    MVR_InitializeParams params = {
+            .debug = true,
+            .present_mode = MVR_PRESENT_MODE_TRIPLE_BUFFER
+    };
+    m_initialize_params = params;
+    initialize_instance(true);
+    initialize_function_pointers();
+    initialize_sync();
+    initialize_vma();
+    initialize_frame_resources();
+    spdlog::info("Finished initializing renderer.");
+}
 
+void MVRender::Renderer::quit_vulkan_headless() {
+    spdlog::info("Waiting for GPU to idle.");
+    vkDeviceWaitIdle(m_vk_logical_device);
 
-void MVRender::Renderer::initialize_instance() {
+    // Manually unmap page buffers
+    for (auto& page: m_frame_res) {
+        page.buffer_allocator.record_copy_commands(VK_NULL_HANDLE);
+    }
+
+    // Destroy subsystems
+    quit_frame_resources();
+    quit_vma();
+    quit_sync();
+    quit_instance();
+
+    spdlog::info("Freed Vulkan resources.");
+}
+
+void MVRender::Renderer::initialize_instance(bool headless) {
     // Get SDL requested layers
     uint32_t count;
-    const char * const *extensions = SDL_Vulkan_GetInstanceExtensions(&count);
+    volkInitialize();
+    const char * const *extensions = nullptr;
+    if (!headless) {
+        extensions = SDL_Vulkan_GetInstanceExtensions(&count);
+    }
 
     // Create instance
     vkb::InstanceBuilder builder;
@@ -51,8 +88,11 @@ void MVRender::Renderer::initialize_instance() {
             .use_default_debug_messenger()
             .require_api_version(1, 3, 0)
             .request_validation_layers(m_initialize_params.debug);
-    for (uint32_t i = 0; i < count; i++)
-        builder.enable_extension(extensions[i]);
+
+    if (!headless) {
+        for (uint32_t i = 0; i < count; i++)
+            builder.enable_extension(extensions[i]);
+    }
 
     // Enable debug naming if available and debug is enabled
     if (m_initialize_params.debug) {
@@ -75,24 +115,32 @@ void MVRender::Renderer::initialize_instance() {
     }
     m_vkb_instance = inst_ret.value();
     m_vk_instance = inst_ret.value().instance;
+    volkLoadInstance(m_vk_instance);
 
     spdlog::info("Created Vulkan instance.");
 
     // Create the surface
-    if (!SDL_Vulkan_CreateSurface(m_initialize_params.window, m_vk_instance, VK_NULL_HANDLE, &m_vk_surface)) {
-        throw MVRender::Exception(MVR_RESULT_CRITICAL_SDL_ERROR, fmt::format("Failed to create Vulkan surface, SDL error {}", SDL_GetError()));
+    if (!headless) {
+        if (!SDL_Vulkan_CreateSurface(m_initialize_params.window, m_vk_instance, VK_NULL_HANDLE, &m_vk_surface)) {
+            throw MVRender::Exception(MVR_RESULT_CRITICAL_SDL_ERROR,
+                                      fmt::format("Failed to create Vulkan surface, SDL error {}", SDL_GetError()));
+        }
     }
 
     spdlog::info("Created Vulkan surface.");
 
     // Physical device
     vkb::PhysicalDeviceSelector selector { m_vkb_instance };
-    auto phys_ret = selector.set_surface (m_vk_surface)
-            .set_minimum_version (1, 3)
-            .prefer_gpu_device_type(vkb::PreferredDeviceType::discrete)
-            .select();
+    selector.set_minimum_version (1, 3)
+            .prefer_gpu_device_type(vkb::PreferredDeviceType::discrete);
+    if (!headless) {
+        selector.set_surface(m_vk_surface);
+    } else {
+        selector.defer_surface_initialization();
+    }
+    auto phys_ret = selector.select();
     if (!phys_ret) {
-        throw MVRender::Exception(MVR_RESULT_NO_DEVICE, fmt::format("Failed to find a suitable physical device, Vulkan error {}", static_cast<uint32_t>(phys_ret.full_error().vk_result)));
+        throw MVRender::Exception(MVR_RESULT_NO_DEVICE, fmt::format("Failed to find a suitable physical device, Vulkan error {}", phys_ret.error().message()));
     }
     m_vk_physical_device = phys_ret.value().physical_device;
     m_vk_physical_device_properties = phys_ret->properties;
@@ -134,6 +182,7 @@ void MVRender::Renderer::initialize_instance() {
     }
     m_vkb_logical_device = dev_ret.value();
     m_vk_logical_device = m_vkb_logical_device.device;
+    volkLoadDevice(m_vk_logical_device);
 
     spdlog::info("Created logical device.");
 
@@ -145,13 +194,18 @@ void MVRender::Renderer::initialize_instance() {
     m_vk_queue = graphics_queue_ret.value();
     m_queue_family_index = m_vkb_logical_device.get_queue_index(vkb::QueueType::graphics).value();
 
-    spdlog::info("Created graphics/compute queue.");
+    if (headless) {
+        spdlog::warn("Created graphics/compute queue in headless mode.");
+    } else {
+        spdlog::info("Created graphics/compute queue.");
+    }
 }
 
 void MVRender::Renderer::quit_instance() {
     vkb::destroy_device(m_vkb_logical_device);
     vkDestroySurfaceKHR(m_vk_instance, m_vk_surface, nullptr);
     vkb::destroy_instance(m_vkb_instance);
+    volkFinalize();
 
     spdlog::info("Freed logical device, surface, and instance.");
 }
@@ -450,6 +504,9 @@ void MVRender::Renderer::initialize_vma() {
         .instance = m_vk_instance,
         .vulkanApiVersion = VK_MAKE_VERSION(1, 3, 0),
     };
+    VmaVulkanFunctions vulkan_functions;
+    vmaImportVulkanFunctionsFromVolk(&allocator_create_info, &vulkan_functions);
+    allocator_create_info.pVulkanFunctions = &vulkan_functions;
     VkResult allocator_result = vmaCreateAllocator(&allocator_create_info, &m_vma);
 
     if (allocator_result != VK_SUCCESS) {

@@ -22,15 +22,34 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build build-essential gcc libvulkan-dev libvulkan1 vulkan-tools vulkan-utility-libraries-dev
+          sudo apt-get install -y cmake ninja-build build-essential gcc libvulkan-dev libvulkan1 vulkan-tools vulkan-utility-libraries-dev mesa-vulkan-drivers python3-pip
+          pip3 install gcovr
 
       - name: Configure CMake
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DSDL_UNIX_CONSOLE_BUILD=ON -DBUILD_SAMPLE_APP=ON -DBUILD_TESTS=ON
+        run: cmake -S . -B build -G Ninja -DSDL_UNIX_CONSOLE_BUILD=ON -DBUILD_SAMPLE_APP=ON -DBUILD_TESTS=ON -DBUILD_WITH_COVERAGE=ON
 
       - name: Build
-        run: cmake --build build --config Release
+        run: |
+          cmake --build build --config Release
 
       - name: Run tests
         run: |
           export LD_LIBRARY_PATH=${{ github.workspace }}/build/SDL3:$LD_LIBRARY_PATH
           ctest --test-dir build/tests --output-on-failure
+
+      - name: Get coverage data
+        run: |
+          gcovr -r . --object-directory build --exclude 3rd/ --exclude test-app/
+          total=$(gcovr -r . --object-directory build --exclude 3rd/ --exclude test-app/ | grep TOTAL | awk '{print $4}')
+          echo "TOTAL_COVERAGE=$total" >> $GITHUB_ENV
+
+      - name: Create Awesome Badge
+        if: github.ref == 'refs/heads/main'
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: 227fdd0e548061bf552b6fe1e51b14d4
+          filename: test.svg
+          label: Coverage
+          message: ${{ env.TOTAL_COVERAGE }}
+          color: green
