@@ -22,4 +22,6 @@
 [submodule "3rd/volk"]
 	path = 3rd/volk
 	url = https://github.com/zeux/volk
-
+[submodule "3rd/doxygen-awesome-css"]
+	path = 3rd/doxygen-awesome-css
+	url = https://github.com/jothepro/doxygen-awesome-css.git

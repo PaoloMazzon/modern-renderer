@@ -2,7 +2,7 @@
 #pragma once
 #include <SDL3/SDL.h>
 
-#define MVR_API extern "C"
+#define MVR_API extern "C" __cdecl
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,14 +32,17 @@ typedef enum {
 /// \brief Tells the initialize function all necessary options to start the renderer
 typedef struct MVR_InitializeParams_s {
     SDL_Window *window;           ///< SDL window that was created with the `SDL_WINDOW_VULKAN` flag
-    bool debug;                   ///< Enables debug features like Vulkan validation layers
+    bool debug;                   ///< Enables debug features like Vulkan validation layers and naming
+                                  ///< each resource so you can more easily identify them in a program
+                                  ///< like RenderDoc (when available).
     MVR_PresentMode present_mode; ///< Initial present mode
 } MVR_InitializeParams;
 
-/// \brief This means the handle is bad
+/// \brief An invalid handle
 #define MVR_INVALID_HANDLE UINT64_MAX
 
-/// \brief Handle for a buffer
+/// \brief Handle for a buffer. This is to be considered an arbitrary value
+/// to the end user.
 typedef uint64_t MVR_Buffer;
 
 #ifdef __cplusplus

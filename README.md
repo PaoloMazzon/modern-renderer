@@ -1,9 +1,14 @@
 # Modern Renderer
 This project aims to be an attempt at a modern renderer written in C++ with a C interface
-utilizing Vulkan for the bulk of the rendering work.
+utilizing Vulkan 1.3 for the bulk of the rendering work.
 
 [![CMake Build & Test](https://github.com/PaoloMazzon/modern-renderer/actions/workflows/build-and-test.yaml/badge.svg?branch=main)](https://github.com/PaoloMazzon/modern-renderer/actions/workflows/build-and-test.yaml)
 ![coverage](https://gist.githubusercontent.com/PaoloMazzon/227fdd0e548061bf552b6fe1e51b14d4/raw/test.svg)
+
+## Hardware Requirements
+Modern Renderer uses Vulkan 1.3 to take advantage of features like dynamic rendering, timeline
+semaphores, and bindless rendering. It can also take advantage of other features like Debug 
+Utilities if they are available on the host machine.
 
 ## Project Overview
 As it stands, all tests are in `tests/`, the main application used for testing the renderer
@@ -17,6 +22,9 @@ target_link_libraries(my-game PRIVATE modern_renderer)
 ```
 Don't forget to recursively clone your submodules, as this project depends on several submodules
 in `3rd/`. To build tests, use `-DBUILD_TESTS=ON`, to build the sample app use `-DBUILD_SAMPLE_APP=ON`.
+The option `-DBUILD_WITH_COVERAGE=ON` can also be used to enable the `--coverage` flag for the compiler
+and linker on Unix systems. This mainly exists for the Github Actions to be able to automatically
+grab a coverage number for this readme.
 
 ## 3rd Party
 See `LICENSE-3RD-PARTY` for information on 3rd-party tools and their associated licenses.
