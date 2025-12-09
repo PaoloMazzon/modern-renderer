@@ -2,7 +2,7 @@
 #pragma once
 #include <SDL3/SDL.h>
 
-#define MVR_API extern "C" __cdecl
+#define MVR_API extern "C"
 
 #ifdef __cplusplus
 extern "C" {

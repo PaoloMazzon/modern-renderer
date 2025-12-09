@@ -13,6 +13,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Get submodule for doxygen-awesome
+        run: |
+          git submodule init 3rd/doxygen-awesome-css
+          git submodule update --remote 3rd/doxygen-awesome-css
+
       - name: Install Doxygen
         run: sudo apt-get install -y doxygen graphviz
 
