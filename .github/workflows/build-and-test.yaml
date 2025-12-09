@@ -43,7 +43,13 @@ jobs:
           ls -l coverage.json
           total=$(gcovr -r . --object-directory build --exclude 3rd/ | grep TOTAL | awk '{print $4}')
           echo "TOTAL_COVERAGE=$total" >> $GITHUB_ENV
-      
-      - name: Send coverage data
-        run: |
-          echo "Coverage amount: $TOTAL_COVERAGE"
+
+      - name: Create Awesome Badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_TOKEN }}
+          gistID: 227fdd0e548061bf552b6fe1e51b14d4
+          filename: test.svg # Use test.svg if you want to use the SVG mode.
+          label: Coverage
+          message: ${{ env.TOTAL_COVERAGE }}
+          color: green
