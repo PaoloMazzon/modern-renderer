@@ -3,7 +3,7 @@ name: Deploy Doxygen Documentation to GitHub Pages
 on:
   push:
     branches:
-      - doxygen
+      - main
 
 jobs:
   build:
