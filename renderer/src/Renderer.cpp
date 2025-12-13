@@ -20,7 +20,13 @@ void MVRender::Renderer::initialize_vulkan(MVR_InitializeParams& params) {
     initialize_sync();
     initialize_vma();
     initialize_frame_resources();
+
+#ifdef BUILD_PLAYGROUND
+    initialize_playground();
+#endif // BUILD_PLAYGROUND
+
     begin_frame();
+
     spdlog::info("Finished initializing renderer.");
 }
 
@@ -28,6 +34,10 @@ void MVRender::Renderer::quit_vulkan() {
     spdlog::info("Waiting for GPU to idle.");
     end_frame();
     vkDeviceWaitIdle(m_vk_logical_device);
+
+#ifdef BUILD_PLAYGROUND
+    initialize_playground();
+#endif // BUILD_PLAYGROUND
 
     // Destroy subsystems
     quit_frame_resources();
@@ -554,6 +564,10 @@ void MVRender::Renderer::begin_frame() {
 }
 
 void MVRender::Renderer::end_frame() {
+#ifdef BUILD_PLAYGROUND
+    update_playground();
+#endif // BUILD_PLAYGROUND
+
     FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
 
     // TODO: Remove this garbage (this exists to pretend there is stuff drawn so it dont instantly crash)

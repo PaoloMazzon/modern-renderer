@@ -97,6 +97,16 @@ namespace MVRender {
         void initialize_vma();
         void quit_vma();
 
+        // This is a section that is to allow devs to mess around with the internals
+        // without affecting the rest of the renderer in any way
+#ifdef BUILD_PLAYGROUND
+        VkPipeline m_playground_compute_pipe;
+        VkPipelineLayout m_playground_compute_pipe_layout;
+        void initialize_playground();
+        void quit_playground();
+        void update_playground();
+#endif // BUILD_PLAYGROUND
+
         void initialize_function_pointers();
 
         // Returns an empty buffer descriptor stored permanently in the renderer

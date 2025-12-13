@@ -101,3 +101,4 @@ build/
 
 cmake-build-debug/
 doc-output/
+*.spv

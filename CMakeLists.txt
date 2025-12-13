@@ -4,6 +4,7 @@ project(modern_renderer)
 option(BUILD_SAMPLE_APP "Build test app for the renderer" OFF)
 option(BUILD_TESTS "Build the test suite for the renderer" OFF)
 option(BUILD_WITH_COVERAGE "Build with --coverage (Unix only)" OFF)
+option(BUILD_WITH_PLAYGROUND "Build with debug playground" OFF)
 
 # Let subprojects see 3rd/ modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/3rd")
@@ -36,6 +37,10 @@ else()
     endif()
 endif()
 
+if (BUILD_WITH_PLAYGROUND)
+    add_compile_options(-DBUILD_PLAYGROUND)
+endif()
+
 set(EXTERNAL_CXX_FILES ${CMAKE_SOURCE_DIR}/3rd/SPIRV-Reflect/spirv_reflect.cpp)
 set(CXX_FILES
         renderer/src/Core.cpp
@@ -44,6 +49,8 @@ set(CXX_FILES
         renderer/src/RendererUtil.cpp
         renderer/src/Buffers.cpp
         renderer/src/CompileHeaders.cpp
+        renderer/src/Playground.cpp
+        renderer/src/Util.cpp
 )
 
 add_library(${PROJECT_NAME} ${CXX_FILES} ${EXTERNAL_CXX_FILES})
