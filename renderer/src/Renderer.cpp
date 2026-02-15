@@ -533,6 +533,9 @@ void MVRender::Renderer::begin_frame() {
     };
     vkWaitSemaphores(m_vk_logical_device, &semaphore_wait_info, UINT64_MAX);
 
+    // Free this FIF's free list
+    // TODO: This
+
     // Reset and begin this frame's command buffers
     FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
     vkResetCommandBuffer(frame->compute_commands, 0);

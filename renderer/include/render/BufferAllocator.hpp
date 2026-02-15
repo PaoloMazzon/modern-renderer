@@ -64,6 +64,8 @@ namespace MVRender {
 
         // Attempts to get a buffer out of the allocator, can fail
         BufferDescriptor *get_buffer_descriptor(VkDeviceSize size);
+
+
     public:
         BufferAllocator() = default;
         explicit BufferAllocator(BufferAllocatorCreateInfo &create_info);

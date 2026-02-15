@@ -6,6 +6,7 @@
 #include <vk_mem_alloc.h>
 #include <cinttypes>
 #include "render/BufferAllocator.hpp"
+#include "render/Buffer.hpp"
 #include "render/Structs.h"
 #include "render/VulkanFunctionPointers.hpp"
 
@@ -26,6 +27,7 @@ namespace MVRender {
         VkCommandBuffer compute_commands;
         VkCommandBuffer draw_commands;
         BufferAllocator buffer_allocator;
+        std::vector<Buffer> free_list;
     };
 
     // Information about the surface

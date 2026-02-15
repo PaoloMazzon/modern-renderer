@@ -2,6 +2,10 @@
 #pragma once
 #include "render/Structs.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /// \brief Initializes the renderer
 /// \param params Parameters to start the renderer, may not be null
 /// \return Returns an MVR_Result, if its not MVR_RESULT_SUCCESS something went wrong.
@@ -21,3 +25,7 @@ MVR_API void mvr_Quit();
 /// after a successful function this may return a value from a previous error
 /// long before the call.
 MVR_API const char *mvr_GetError();
+
+#ifdef __cplusplus
+}
+#endif
