@@ -61,7 +61,9 @@ void MVRender::Renderer::submit_single_use_command_buffer(VkCommandBuffer buffer
 
 // TODO: Use something more RAII, or otherwise fix this mess.
 MVRender::Buffer *MVRender::Renderer::load_permanent_buffer(uint64_t size, void *data) {
-    // TODO: Use BufferAllocator as a staging buffer and use it's copy command buffer to perform the copy
+    // TODO: Create a transfer and permanent buffer. That transfer buffer should then be
+    //       added to this FIF's free list, and the copy command should be recorded on this
+    //       FIF's buffer allocator's copy command buffer.
     return nullptr;
 }
 

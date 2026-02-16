@@ -41,10 +41,10 @@ problem is essentially that users can free them whenever, and we don't want to
 halt the GPU to free them from memory. So to explain their lifetime, the
 top-level renderer is responsible for their creation and deletion as opposed to
 it being `BufferAllocator` (as is the case for temporary buffers). When the user
-requests a new permanent buffer, it is created instantly but the current frame's
-`BufferAllocator` is used as the transfer buffer. Because of the guarantees
-provided by the `BufferAllocator`, the permanent buffer will have been
-transferred to by the time it gets used.
+requests a new permanent buffer, a transfer buffer and the permanent buffer are
+created simultaneously. The transfer buffer will queue the copy in the current
+frame's `BufferAllocator` copy command buffer, and add the transfer buffer to
+this FIF's free list. See below.
 
 Permanent buffers are not stored anywhere besides the `MVR_Buffer` handle the
 user has (which is just a pointer to an instance of `MVRender::Buffer`). When
