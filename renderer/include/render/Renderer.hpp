@@ -27,7 +27,7 @@ namespace MVRender {
         VkCommandBuffer compute_commands;
         VkCommandBuffer draw_commands;
         BufferAllocator buffer_allocator;
-        std::vector<Buffer> free_list;
+        std::vector<Buffer> free_list; // TODO: Probably extend this to images later
     };
 
     // Information about the surface
@@ -80,10 +80,6 @@ namespace MVRender {
         // Memory
         VmaAllocator m_vma;
 
-        // Permanent buffers
-        std::vector<BufferDescriptor> m_permanent_buffers;
-        std::vector<bool> m_permanent_buffer_occupied;
-
         // Internal subsystems
         void build_surface_format();
 
@@ -100,12 +96,6 @@ namespace MVRender {
         void quit_vma();
 
         void initialize_function_pointers();
-
-        // Returns an empty buffer descriptor stored permanently in the renderer
-        BufferDescriptor *get_buffer_descriptor();
-
-        // Invalidates the descriptor, does not free the contents
-        void remove_buffer_descriptor(BufferDescriptor *descriptor);
 
     public:
         // Singleton pattern - the class is destroyed at program end
@@ -145,11 +135,15 @@ namespace MVRender {
         void submit_single_use_command_buffer(VkCommandBuffer buffer);
 
         // Create and free permanent buffers
-        BufferDescriptor *load_permanent_buffer(uint64_t size, void *data);
-        void free_permanent_buffer(BufferDescriptor *buffer);
+        Buffer *load_permanent_buffer(uint64_t size, void *data);
+        void free_permanent_buffer(Buffer *buffer);
 
         // Give resources names, this does nothing if debug is disabled or the extension is not
         // present on the host machine.
         void debug_name_object(uint64_t object, VkObjectType type, const std::string& name);
+
+        // Getters
+        [[nodiscard]] VkDevice get_device() const { return m_vk_logical_device; }
+        [[nodiscard]] VmaAllocator get_vma() const { return m_vma; }
     };
 }

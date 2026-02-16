@@ -3,6 +3,7 @@
 #include <volk.h>
 #include <vector>
 #include "render/Structs.h"
+#include "render/Buffer.hpp"
 
 namespace MVRender {
     struct BufferAllocatorCreateInfo {
@@ -12,15 +13,6 @@ namespace MVRender {
         uint32_t queue_family_index;
         VkPhysicalDeviceProperties device_properties;
         uint32_t frame_in_flight_index;
-    };
-
-    // MVR_Buffer is a pointer to one of these structs. Permanent buffers do not care about anything except buffer.
-    struct BufferDescriptor {
-        VkBuffer buffer; // the device-local buffer
-        VmaAllocation allocation; // allocation for permanent buffers -- NOT FOR TEMPORARY
-        VkDeviceSize offset; // offset in that buffer for this virtual buffer
-        VkDeviceSize size; // amount of bytes pertaining to this buffer
-        void *data; // memory-mapped host-visible pointer to the start of the range
     };
 
     // For internal use in BufferAllocator
@@ -39,7 +31,7 @@ namespace MVRender {
     // buffers in vram.
     class BufferAllocator {
         // List of temporary buffers
-        std::vector<BufferDescriptor> m_buffers;
+        std::vector<Buffer> m_buffers;
 
         // Pages of memory, both the staging and device memory
         std::vector<BufferPage> m_buffer_pages;
@@ -63,8 +55,7 @@ namespace MVRender {
         BufferPage *find_page(VkDeviceSize size);
 
         // Attempts to get a buffer out of the allocator, can fail
-        BufferDescriptor *get_buffer_descriptor(VkDeviceSize size);
-
+        Buffer *get_buffer_descriptor(VkDeviceSize size);
 
     public:
         BufferAllocator() = default;

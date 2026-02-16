@@ -3,6 +3,7 @@
 #include <vulkan/vk_enum_string_helper.h>
 #include <vk_mem_alloc.h>
 #include <fmt/core.h>
+#include <spdlog/spdlog.h>
 
 #include "render/Renderer.hpp"
 #include "render/BufferAllocator.hpp"
@@ -131,15 +132,14 @@ static VkDeviceSize move_by_alignment(VkDeviceSize current, VkDeviceSize increas
     return current + increase;
 }
 
-MVRender::BufferDescriptor *MVRender::BufferAllocator::get_buffer_descriptor(VkDeviceSize size) {
+MVRender::Buffer *MVRender::BufferAllocator::get_buffer_descriptor(VkDeviceSize size) {
     BufferPage *page = find_page(size);
 
-    BufferDescriptor descriptor = {
-        .buffer = page->vram_buffer,
-        .offset = page->offset,
-        .size = size,
-        .data = static_cast<uint8_t*>(page->data) + page->offset,
-    };
+    Buffer descriptor(
+            page->vram_buffer,
+            size,
+            page->offset,
+            static_cast<uint8_t*>(page->data) + page->offset);
     m_buffers.emplace_back(descriptor);
 
     page->offset = move_by_alignment(page->offset, size, m_minimum_alignment);
@@ -169,8 +169,8 @@ MVRender::BufferAllocator::~BufferAllocator() {
 }
 
 MVR_Buffer MVRender::BufferAllocator::allocate_temp_buffer(VkDeviceSize size, void **data) {
-    BufferDescriptor *descriptor = get_buffer_descriptor(size);
-    *data = descriptor->data;
+    Buffer *descriptor = get_buffer_descriptor(size);
+    *data = descriptor->get_data();
     return reinterpret_cast<MVR_Buffer>(descriptor);
 }
 
@@ -260,5 +260,15 @@ MVR_API MVR_Result mvr_CreateBuffer(uint64_t size, void *data, MVR_Buffer *buffe
 
 MVR_API void mvr_DestroyBuffer(MVR_Buffer buffer) {
     auto &instance = MVRender::Renderer::instance();
-    instance.free_permanent_buffer(reinterpret_cast<MVRender::BufferDescriptor *>(buffer));
+    instance.free_permanent_buffer(reinterpret_cast<MVRender::Buffer *>(buffer));
+}
+
+MVRender::Buffer::~Buffer() {
+    if (!m_freed && is_permanent()) {
+        spdlog::error("Buffer of size {} bytes not freed by user.", m_size);
+
+        Renderer &renderer = Renderer::instance();
+        vkDeviceWaitIdle(renderer.get_device());
+        vmaDestroyBuffer(renderer.get_vma(), m_internal_buffer, m_allocation);
+    }
 }

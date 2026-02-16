@@ -532,12 +532,16 @@ void MVRender::Renderer::begin_frame() {
         .pValues = &wait_value,
     };
     vkWaitSemaphores(m_vk_logical_device, &semaphore_wait_info, UINT64_MAX);
+    FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
 
     // Free this FIF's free list
-    // TODO: This
+    for (auto &buffer: frame->free_list) {
+        vmaDestroyBuffer(m_vma, buffer.get_internal_buffer(), buffer.get_allocation());
+        buffer.mark_freed();
+    }
+    frame->free_list.clear();
 
     // Reset and begin this frame's command buffers
-    FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
     vkResetCommandBuffer(frame->compute_commands, 0);
     vkResetCommandBuffer(frame->copy_commands, 0);
     vkResetCommandBuffer(frame->draw_commands, 0);
