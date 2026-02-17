@@ -535,9 +535,12 @@ void MVRender::Renderer::begin_frame() {
     FrameResources *frame = &m_frame_res[m_frame_count % FRAMES_IN_FLIGHT];
 
     // Free this FIF's free list
-    for (auto &buffer: frame->free_list) {
+    for (auto index: frame->free_list) {
+        if (!m_permanent_buffers[index]) continue;
+        Buffer &buffer = m_permanent_buffers[index].value();
         vmaDestroyBuffer(m_vma, buffer.get_internal_buffer(), buffer.get_allocation());
         buffer.mark_freed();
+        m_permanent_buffers[index] = std::nullopt;
     }
     frame->free_list.clear();
 

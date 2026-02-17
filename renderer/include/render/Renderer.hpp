@@ -27,7 +27,9 @@ namespace MVRender {
         VkCommandBuffer compute_commands;
         VkCommandBuffer draw_commands;
         BufferAllocator buffer_allocator;
-        std::vector<Buffer> free_list; // TODO: Probably extend this to images later
+
+        // These are indices into m_permanent_buffers in the renderer
+        std::vector<int32_t> free_list; // TODO: Probably extend this to images later
     };
 
     // Information about the surface
@@ -79,6 +81,9 @@ namespace MVRender {
 
         // Memory
         VmaAllocator m_vma;
+
+        // User resources
+        std::vector<std::optional<Buffer>> m_permanent_buffers;
 
         // Internal subsystems
         void build_surface_format();

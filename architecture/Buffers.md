@@ -46,11 +46,11 @@ created simultaneously. The transfer buffer will queue the copy in the current
 frame's `BufferAllocator` copy command buffer, and add the transfer buffer to
 this FIF's free list. See below.
 
-Permanent buffers are not stored anywhere besides the `MVR_Buffer` handle the
-user has (which is just a pointer to an instance of `MVRender::Buffer`). When
+Permanent buffers are stored in a vector in the top-level renderer and the user
+has a pointer to (the vector contains optionals of `MVRender::Buffer`). When
 the user destroys one, the call to `mvr_DestroyBuffer` calls
-`free_permanent_buffer` which in turn adds it to this FIF's free list (free
-lists are freed at the start of each FIF).
+`free_permanent_buffer` which in turn adds the buffer's index to this FIF's free
+list. Free lists are freed at the start of each FIF).
 
 For example, imagine you have 3 frames-in-flight, and you attempt to free buffer
 `b` during FIF index #0. The user may have queued some work that uses buffer `b`

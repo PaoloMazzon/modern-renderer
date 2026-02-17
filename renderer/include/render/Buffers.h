@@ -36,4 +36,7 @@ MVR_API MVR_Result mvr_CreateBuffer(uint64_t size, void *data, MVR_Buffer *buffe
 
 /// \brief Destroys a permanent MVR_Buffer
 /// \param buffer Buffer to destroy
+/// \warning Buffers freed with this function are not immediately freed. You should
+///          treat them as though they are, but they are actually freed at a later
+///          time when the renderer can guarantee the GPU isn't using it.
 MVR_API void mvr_DestroyBuffer(MVR_Buffer buffer);
