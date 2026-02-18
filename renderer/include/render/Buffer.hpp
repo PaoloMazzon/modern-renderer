@@ -8,16 +8,15 @@ namespace MVRender {
     class Buffer {
     private:
         // If this isn't null, this is a permanent buffer
-        VmaAllocation m_allocation;
+        VmaAllocation m_allocation = nullptr;
 
-        VkBuffer m_internal_buffer;
-        VkDeviceSize m_size;
-        VkDeviceSize m_offset;
-        void *m_data;
+        VkBuffer m_internal_buffer = nullptr;
+        VkDeviceSize m_size = 0;
+        VkDeviceSize m_offset = 0;
+        void *m_data = nullptr;
 
         // Warns user if a buffer is not freed (and is a permanent buffer)
         bool m_freed = false;
-        bool m_not_default = false;
 
     public:
         Buffer() = default;
@@ -27,7 +26,7 @@ namespace MVRender {
             m_allocation(allocation),
             m_size(size),
             m_offset(offset),
-            m_data(data) { m_not_default = true; }
+            m_data(data) { }
 
         [[nodiscard]] VkBuffer get_internal_buffer() const { return m_internal_buffer; };
         [[nodiscard]] VkDeviceSize get_size() const { return m_size; };

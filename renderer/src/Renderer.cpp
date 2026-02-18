@@ -491,6 +491,17 @@ void MVRender::Renderer::initialize_frame_resources() {
 }
 
 void MVRender::Renderer::quit_frame_resources() {
+    for (auto &frame: m_frame_res) {
+        for (auto index: frame.free_list) {
+            if (!m_permanent_buffers[index]) continue;
+            Buffer &buffer = m_permanent_buffers[index].value();
+            vmaDestroyBuffer(m_vma, buffer.get_internal_buffer(), buffer.get_allocation());
+            buffer.mark_freed();
+            m_permanent_buffers[index] = std::nullopt;
+        }
+    }
+    m_permanent_buffers.clear();
+
     vkDestroyCommandPool(m_vk_logical_device, m_command_pool, nullptr);
     // Intentionally free items in the frame resource list to call their destructors
     m_frame_res.resize(0);

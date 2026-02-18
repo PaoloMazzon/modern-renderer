@@ -6,6 +6,7 @@
 #include <vk_mem_alloc.h>
 #include <cinttypes>
 #include <optional>
+#include <deque>
 #include "render/BufferAllocator.hpp"
 #include "render/Buffer.hpp"
 #include "render/Structs.h"
@@ -82,7 +83,7 @@ namespace MVRender {
         vkb::Device m_vkb_logical_device;
 
         // User resources
-        std::vector<std::optional<Buffer>> m_permanent_buffers;
+        std::deque<std::optional<Buffer>> m_permanent_buffers;
 
         // Grabs a slot for a permanent buffer out of the vector and returns it
         std::optional<Buffer> *get_permanent_buffer_slot(uint32_t *out_index);
