@@ -264,7 +264,7 @@ MVR_API void mvr_DestroyBuffer(MVR_Buffer buffer) {
 }
 
 MVRender::Buffer::~Buffer() {
-    if (!m_freed && is_permanent()) {
+    if (!m_freed && is_permanent() && !m_not_default) {
         spdlog::error("Buffer of size {} bytes not freed by user.", m_size);
 
         Renderer &renderer = Renderer::instance();

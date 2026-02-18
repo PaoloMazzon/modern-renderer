@@ -8,6 +8,10 @@
 extern "C" {
 #endif
 
+/// \brief This is used to tell the programmer that this code should never be reached.
+///        If you do reach this code it means you did something wrong.
+#define MVR_EXPRESSION_UNREACHABLE assert(false);
+
 /// \brief Core functions may return a result code, negative result codes represent a fatal
 /// error. Fatal errors mean the renderer can no longer continue operating, positive result
 /// codes represent less severe and recoverable problems.

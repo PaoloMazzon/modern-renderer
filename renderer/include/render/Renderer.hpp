@@ -5,6 +5,7 @@
 #include <VkBootstrap.h>
 #include <vk_mem_alloc.h>
 #include <cinttypes>
+#include <optional>
 #include "render/BufferAllocator.hpp"
 #include "render/Buffer.hpp"
 #include "render/Structs.h"
@@ -29,7 +30,7 @@ namespace MVRender {
         BufferAllocator buffer_allocator;
 
         // These are indices into m_permanent_buffers in the renderer
-        std::vector<int32_t> free_list; // TODO: Probably extend this to images later
+        std::vector<uint32_t> free_list; // TODO: Probably extend this to images later
     };
 
     // Information about the surface
@@ -58,6 +59,7 @@ namespace MVRender {
         // Internal vulkan state
         VkInstance m_vk_instance;
         VkSurfaceKHR m_vk_surface;
+        VmaAllocator m_vma;
         SurfaceFormat m_surface_format;
         VkPhysicalDevice m_vk_physical_device;
         VkPhysicalDeviceProperties m_vk_physical_device_properties;
@@ -79,11 +81,11 @@ namespace MVRender {
         vkb::Instance m_vkb_instance;
         vkb::Device m_vkb_logical_device;
 
-        // Memory
-        VmaAllocator m_vma;
-
         // User resources
         std::vector<std::optional<Buffer>> m_permanent_buffers;
+
+        // Grabs a slot for a permanent buffer out of the vector and returns it
+        std::optional<Buffer> *get_permanent_buffer_slot(uint32_t *out_index);
 
         // Internal subsystems
         void build_surface_format();
