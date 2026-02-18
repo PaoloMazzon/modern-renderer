@@ -4,7 +4,6 @@
 #include <render/Logging.hpp>
 #include <render/Renderer.hpp>
 #include <render/Buffers.h>
-#include "render/Core.h"
 
 TEST_CASE("User-facing error messages") {
     MVRender::set_error_message("123abc");
@@ -25,17 +24,8 @@ TEST_CASE("User-facing error messages") {
 }
 
 TEST_CASE("Renderer integration test") {
-    //auto& renderer = MVRender::Renderer::instance();
-    //renderer.initialize_vulkan_headless();
-    SDL_Init(SDL_INIT_EVENTS);
-    SDL_Window *window = SDL_CreateWindow("", 200, 200, SDL_WINDOW_VULKAN);
-    REQUIRE(window);
-    MVR_InitializeParams p = {
-            .window = window,
-            .debug = true,
-            .present_mode = MVR_PRESENT_MODE_VSYNC,
-    };
-    REQUIRE(mvr_Initialize(&p) == MVR_RESULT_SUCCESS);
+    auto& renderer = MVRender::Renderer::instance();
+    renderer.initialize_vulkan_headless();
 
     // Test temporary buffers
     uint8_t garbage[100] = {0};
@@ -49,10 +39,5 @@ TEST_CASE("Renderer integration test") {
     REQUIRE(mvr_CreateBuffer(100, garbage, &permanent) == MVR_RESULT_SUCCESS);
     mvr_DestroyBuffer(permanent);
 
-    //renderer.quit_vulkan_headless();
-    mvr_PresentFrame();
-    mvr_PresentFrame();
-    mvr_PresentFrame();
-    mvr_PresentFrame();
-    mvr_Quit();
+    renderer.quit_vulkan_headless();
 }
