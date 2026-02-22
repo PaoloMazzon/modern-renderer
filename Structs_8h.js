@@ -2,6 +2,7 @@ var Structs_8h =
 [
     [ "MVR_InitializeParams_s", "structMVR__InitializeParams__s.html", "structMVR__InitializeParams__s" ],
     [ "MVR_API", "Structs_8h.html#ada05dbe091d3e8259ca7384a8a8dae99", null ],
+    [ "MVR_EXPRESSION_UNREACHABLE", "Structs_8h.html#a56738b8d808cf528506fc876a8b763d4", null ],
     [ "MVR_INVALID_HANDLE", "Structs_8h.html#a5045ad2ce9c3e4245e79e2688a6dc3f5", null ],
     [ "MVR_Buffer", "Structs_8h.html#a4b5e237ae26a7f413c0d9ac5c20d1991", null ],
     [ "MVR_InitializeParams", "Structs_8h.html#a37c270beb547ca8c7f167b31b3626b1a", null ],

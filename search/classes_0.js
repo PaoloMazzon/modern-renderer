@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['mvr_5finitializeparams_5fs_0',['MVR_InitializeParams_s',['../structMVR__InitializeParams__s.html',1,'']]]
+  ['buffer_0',['Buffer',['../classMVRender_1_1Buffer.html',1,'MVRender']]]
 ];

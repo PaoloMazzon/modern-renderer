@@ -28,11 +28,15 @@ var NAVTREE =
     [ "Hardware Requirements", "index.html#autotoc_md1", null ],
     [ "Project Overview", "index.html#autotoc_md2", null ],
     [ "3rd Party", "index.html#autotoc_md3", null ],
+    [ "Namespaces", "namespaces.html", [
+      [ "Namespace List", "namespaces.html", "namespaces_dup" ]
+    ] ],
     [ "Data Structures", "annotated.html", [
       [ "Data Structures", "annotated.html", "annotated_dup" ],
       [ "Data Structure Index", "classes.html", null ],
       [ "Data Fields", "functions.html", [
         [ "All", "functions.html", null ],
+        [ "Functions", "functions_func.html", null ],
         [ "Variables", "functions_vars.html", null ]
       ] ]
     ] ],
@@ -52,7 +56,7 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"Buffers_8h.html"
+"Buffer_8hpp.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
